@@ -1,0 +1,36 @@
+# Dependencies (أكبر مجلد - لا يُرفع أبداً ويتم تحميله تلقائياً بسيرفر الاستضافة)
+node_modules/
+/.pnp
+.pnp.js
+
+# Next.js Build Output (مخرجات البناء - لا تُرفع)
+.next/
+out/
+build/
+dist/
+
+# Environment Variables & Secrets (ملفات البيئة والمفاتيح السرية - لا تُرفع للأمان)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database (قاعدة البيانات المؤقتة المحلية)
+prisma/dev.db
+prisma/dev.db-journal
+*.db
+*.db-journal
+
+# Logs & Debugging
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Editor & OS files
+.DS_Store
+*.pem
+.vscode/
+.idea/
+Thumbs.db

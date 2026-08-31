@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User: Teachers & Admins
+model User {
+  id                   String    @id @default(cuid())
+  name                 String
+  email                String    @unique
+  passwordHash         String
+  role                 String    @default("teacher") // "teacher" or "admin"
+  geminiApiKey         String?   // Encrypted at rest
+  geminiModel          String    @default("gemini-2.5-flash")
+  platformName         String    @default("منصة د.سعيد حسن")
+  teacherTitle         String    @default("خبير ومدرس أول اللغة العربية")
+  teacherBio           String    @default("أسعى إلى تحبيب اللغة العربية إلى الشباب وتصحيح الأخطاء اللغوية الشائعة حتى يبقى للغة رونقها وفي سبيل ذلك أخصص دورات لتدريب المدرسين الراغبين في ذلك وتأهيلهم وكتب لشرح المناهج بصيغة pdf او word وملفات باور بوينت لكل المراحل وأغانٍ لكل الفروع.")
+  teacherExperience    String    @default("أكثر من 40 عاماً")
+  teacherStudentsCount String    @default("+10,000 طالب")
+  teacherCoursesCount  String    @default("+50 دورة ومذكرة")
+  heroBadge            String    @default("منصتك التعليمية الأولى في اللغة العربية")
+  heroTitle            String    @default("تعلم بطريقة مختلفة وحقق أفضل نتائجك")
+  heroSubtitle         String    @default("دروس متكاملة، امتحانات تفاعلية بالذكاء الاصطناعي، ومتابعة مستمرة لمساعدتك على تحقيق أعلى الدرجات.")
+  teacherImageUrl      String    @default("/teacher.png")
+  brandTheme           String    @default("violet") // "violet" or "gold"
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  exams                Exam[]
+  groups               Group[]
+  courses              Course[]
+}
+
+// Educational Courses & Curricula managed by teacher
+model Course {
+  id          String   @id @default(cuid())
+  teacherId   String
+  teacher     User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title       String
+  stage       String   // e.g. "الصف الثالث الثانوي", "المرحلة الثانوية", "تأهيل المعلمين"
+  description String
+  badge       String   @default("كورس متكامل")
+  lessonsCount Int     @default(12)
+  duration    String   @default("شامل المذكرات والـ PDF")
+  price       String?  @default("متاح الآن")
+  themeColor  String   @default("violet") // "violet", "gold", "emerald", "blue"
+  isPublished Boolean  @default(true)
+  orderIndex  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Student Groups configured by teacher
+model Group {
+  id        String   @id @default(cuid())
+  teacherId String
+  teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+}
+
+// Exams
+model Exam {
+  id                    String        @id @default(cuid())
+  teacherId             String
+  teacher               User          @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  code                  String        @unique // e.g. "ARB-101" or "EXAM-4821"
+  title                 String
+  description           String?
+  durationMinutes       Int?          // null = open duration
+  status                String        @default("DRAFT") // "DRAFT", "PUBLISHED", "CLOSED"
+  allowMultipleAttempts Boolean       @default(false)
+  requirePhone          Boolean       @default(true)
+  requireGroup          Boolean       @default(true)
+  groupsList            String        @default("[]") // JSON string of available group options for this exam
+  totalPoints           Float         @default(0)
+  passingPercentage     Float         @default(50)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  questions             Question[]
+  attempts              ExamAttempt[]
+}
+
+// Questions in an Exam
+model Question {
+  id              String           @id @default(cuid())
+  examId          String
+  exam            Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionNumber  Int
+  type            String           // "mcq" or "essay"
+  questionText    String
+  points          Float            @default(1)
+  correctOptionId String?          // e.g. "a", "b", "c", "d"
+  needsReview     Boolean          @default(false)
+  orderIndex      Int              @default(0)
+  options         QuestionOption[]
+  answers         StudentAnswer[]
+}
+
+// MCQ Options
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionKey  String   // "a", "b", "c", "d"
+  text       String
+}
+
+// Student Exam Attempt (No user account required)
+model ExamAttempt {
+  id               String          @id @default(cuid())
+  examId           String
+  exam             Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentName      String
+  studentPhone     String
+  studentGroup     String?
+  extraData        String?         // JSON for future fields
+  startedAt        DateTime        @default(now())
+  submittedAt      DateTime?
+  timeSpentSeconds Int             @default(0)
+  status           String          @default("IN_PROGRESS") // "IN_PROGRESS", "SUBMITTED", "GRADED"
+  mcqScore         Float           @default(0)
+  essayScore       Float           @default(0)
+  totalScore       Float           @default(0)
+  maxScore         Float           @default(0)
+  percentage       Float           @default(0)
+  isPassed         Boolean         @default(false)
+  answers          StudentAnswer[]
+  createdAt        DateTime        @default(now())
+}
+
+// Answers submitted by student
+model StudentAnswer {
+  id              String      @id @default(cuid())
+  attemptId       String
+  attempt         ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String
+  question        Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption  String?     // "a", "b", "c", "d" for MCQ
+  essayAnswer     String?     // Text written by student
+  isCorrect       Boolean?    // true/false for MCQ, null until graded for Essay
+  pointsAwarded   Float       @default(0)
+  teacherFeedback String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
