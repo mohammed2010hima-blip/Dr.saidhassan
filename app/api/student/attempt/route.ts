@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const StartAttemptSchema = z.object({
@@ -11,6 +12,14 @@ const StartAttemptSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`attempt:${ip}`, 30, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: 'تم إرسال طلبات كثيرة في وقت قصير. يرجى الانتظار قليلاً.' },
+        { status: 429 }
+      );
+    }
     const body = await req.json();
     const parsed = StartAttemptSchema.safeParse(body);
 

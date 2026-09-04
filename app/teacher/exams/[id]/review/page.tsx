@@ -35,6 +35,7 @@ interface QuestionItem {
   questionNumber: number;
   type: 'mcq' | 'essay';
   questionText: string;
+  passage?: string | null;
   points: number;
   correctOptionId?: string | null;
   needsReview?: boolean;
@@ -97,6 +98,7 @@ export default function ExamReviewPage() {
           questionNumber: q.questionNumber || idx + 1,
           type: q.type,
           questionText: q.questionText,
+          passage: q.passage || null,
           points: q.points,
           correctOptionId: q.correctOptionId,
           needsReview: q.needsReview,
@@ -499,6 +501,27 @@ export default function ExamReviewPage() {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+
+            {/* Reading Passage / Context Paragraph */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  قطعة القراءة / الفقرة المرفقة (اختياري - تظهر للطلاب بجانب السؤال)
+                </label>
+                {q.passage && (
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    مرفق معها فقرة قراءة
+                  </span>
+                )}
+              </div>
+              <textarea
+                rows={2}
+                placeholder="إذا كان السؤال يدور حول قطعة قراءة أو أبيات شعرية أو فقرة نصية، اكتبها هنا لتظهر للطالب أثناء الإجابة..."
+                value={q.passage || ''}
+                onChange={(e) => handleUpdateQuestion(qIndex, 'passage', e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-amber-200/80 bg-amber-50/30 text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition"
+              ></textarea>
             </div>
 
             {/* Question Text */}

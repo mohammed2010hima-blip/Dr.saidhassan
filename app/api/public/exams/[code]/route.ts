@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   try {
     const code = params.code.trim().toUpperCase();
@@ -50,6 +53,7 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
       id: q.id,
       questionNumber: q.questionNumber,
       type: q.type,
+      passage: q.passage || null,
       questionText: q.questionText,
       points: q.points,
       options: q.options.map((opt) => ({
@@ -58,22 +62,29 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
       })),
     }));
 
-    return NextResponse.json({
-      exam: {
-        id: exam.id,
-        code: exam.code,
-        title: exam.title,
-        description: exam.description,
-        durationMinutes: exam.durationMinutes,
-        allowMultipleAttempts: exam.allowMultipleAttempts,
-        requirePhone: exam.requirePhone,
-        requireGroup: exam.requireGroup,
-        groupsList,
-        totalPoints: exam.totalPoints,
-        questionsCount: sanitizedQuestions.length,
+    return NextResponse.json(
+      {
+        exam: {
+          id: exam.id,
+          code: exam.code,
+          title: exam.title,
+          description: exam.description,
+          durationMinutes: exam.durationMinutes,
+          allowMultipleAttempts: exam.allowMultipleAttempts,
+          requirePhone: exam.requirePhone,
+          requireGroup: exam.requireGroup,
+          groupsList,
+          totalPoints: exam.totalPoints,
+          questionsCount: sanitizedQuestions.length,
+        },
+        questions: sanitizedQuestions,
       },
-      questions: sanitizedQuestions,
-    });
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Fetch Exam By Code Error:', error);
     return NextResponse.json({ error: 'حدث خطأ في الخادم' }, { status: 500 });

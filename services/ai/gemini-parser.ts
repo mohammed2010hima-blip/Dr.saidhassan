@@ -17,6 +17,7 @@ export const QuestionSchema = z.object({
   question_number: z.number(),
   type: z.enum(['mcq', 'essay']),
   question_text: z.string().min(1, 'نص السؤال مطلوب'),
+  passage: z.string().optional().nullable().default(null), // Reading comprehension passage / poetry piece / context text
   options: z.array(OptionSchema).optional().default([]),
   correct_answer: z.string().nullable().optional(), // "a", "b", "c", "d" or null
   points: z.number().default(1),
@@ -109,37 +110,42 @@ CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
 1. VERBATIM EXTRACTION (استخراج حرفي تام):
    - Extract every word, sentence, poetry verse (بيت شعر), and punctuation mark EXACTLY as written in the original document.
    - NEVER alter, paraphrase, summarize, omit, or invent questions or options.
-   - NEVER omit introductory poetry, Quranic verses, or reading passages that precede questions.
 
-2. ARABIC DIACRITICS & TASHKEEL PRESERVATION (الحفاظ التام على التشكيل):
+2. READING COMPREHENSION PASSAGES & POETRY PARAGRAPHS (قطع القراءة والفقرات والنصوص):
+   - If a question or a set of questions refers to a reading passage, literary text, poetry piece, Quranic excerpt, or paragraph (e.g., 'اقرأ الفقرة التالية ثم أجب...', 'قال الشاعر:...'):
+   - You MUST extract the full passage text into the "passage" field for all questions related to that passage.
+   - The "question_text" should contain the specific question itself.
+   - If a question does not belong to a separate passage, set "passage": null.
+
+3. ARABIC DIACRITICS & TASHKEEL PRESERVATION (الحفاظ التام على التشكيل):
    - You MUST preserve every Arabic Tashkeel mark present in the document:
      * الفتحة ( َ ), الضمة ( ُ ), الكسرة ( ِ ), السكون ( ْ ), الشدة ( ّ )
      * تنوين الفتح ( ً ), تنوين الضم ( ٌ ), تنوين الكسر ( ٍ )
    - This is of supreme importance in Arabic grammar (النحو) and phonetics. Do NOT strip or modify any diacritics.
 
-3. RICH TEXT PARSING (قراءة التنسيقات المتقدمة):
+4. RICH TEXT PARSING (قراءة التنسيقات المتقدمة):
    - Preserve text underlines (الخطوط السفلية تحت الكلمات المراد إعرابها أو استخراجها) using HTML <u>word</u> tags (e.g. "أعرب ما تحته خط: قرأتُ <u>الكتابَ</u> المفيدَ").
    - Preserve bold text using **word** or <b>word</b>.
    - Preserve quotation marks («...» or "...") and brackets.
    - Preserve stanza line breaks for poetry verses.
 
-4. QUESTION CLASSIFICATION:
+5. QUESTION CLASSIFICATION:
    - "mcq": Multiple Choice Questions with choices (أ, ب, ج, د or 1, 2, 3, 4 or A, B, C, D).
    - "essay": Open-ended, essay, explanation, grammar parsing (إعراب), or free-response questions without fixed choices.
 
-5. MCQ OPTIONS MAPPING:
+6. MCQ OPTIONS MAPPING:
    - Map options sequentially to lowercase keys: "a", "b", "c", "d" (and "e" if 5 options exist).
    - Preserve the exact text and diacritics of each option.
 
-6. ACCURATE SCORING & REVIEW FLAGS:
+7. ACCURATE SCORING & REVIEW FLAGS:
    - If the correct answer is explicitly marked in the document (answer key or checkmark), specify it ("a", "b", etc.).
    - If uncertain or not explicitly provided, set "correct_answer": null and "needs_review": true.
 
-7. OUTPUT SPECIFICATION:
+8. OUTPUT SPECIFICATION:
    - Output MUST be strictly valid JSON conforming to this schema without any outer explanation:
 
 {
-  "exam_title": "String (Title of the exam, e.g. 'امتحان اللغة العربية للصف الثالث الثانوي')",
+  "exam_title": "String (Title of the exam, e.g. 'امتحان شامل في اللغة العربية')",
   "description": "String (Instructions, header, subject information)",
   "duration_minutes": 60,
   "questions": [
@@ -147,7 +153,8 @@ CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
       "id": "q1",
       "question_number": 1,
       "type": "mcq",
-      "question_text": "نص السؤال بالتفصيل مع التشكيل والخطوط السفلية <u>مثل هذا</u>...",
+      "passage": "نص الفقرة أو القطعة أو الأبيات الشعرية كاملة التي يدور حولها السؤال إن وُجدت، أو null إن لم توجد.",
+      "question_text": "ما الفكرة الرئيسة في الفقرة السابقة؟",
       "options": [
         { "id": "a", "text": "الاختيار الأول مع التشكيل" },
         { "id": "b", "text": "الاختيار الثاني" },
@@ -162,7 +169,8 @@ CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
       "id": "q2",
       "question_number": 2,
       "type": "essay",
-      "question_text": "قال الشاعر: ...\\nبيّن نوع الصورة البيانية في الشطر الثاني.",
+      "passage": null,
+      "question_text": "أعرب ما تحته خط في جملة: «العلمُ <u>نورٌ</u>»",
       "options": [],
       "correct_answer": null,
       "points": 2,

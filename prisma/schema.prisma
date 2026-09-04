@@ -92,6 +92,7 @@ model Question {
   questionNumber  Int
   type            String           // "mcq" or "essay"
   questionText    String
+  passage         String?          // Reading comprehension passage, poetry, or grammar text for this question
   points          Float            @default(1)
   correctOptionId String?          // e.g. "a", "b", "c", "d"
   needsReview     Boolean          @default(false)

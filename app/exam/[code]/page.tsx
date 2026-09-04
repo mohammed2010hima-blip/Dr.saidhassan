@@ -20,7 +20,8 @@ import {
   GraduationCap,
   Loader2,
   FileCheck,
-  RotateCcw
+  RotateCcw,
+  BookOpen,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Modal } from '@/components/ui/Modal';
@@ -35,6 +36,7 @@ interface Question {
   id: string;
   questionNumber: number;
   type: 'mcq' | 'essay';
+  passage?: string | null;
   questionText: string;
   points: number;
   options: QuestionOption[];
@@ -720,93 +722,122 @@ export default function StudentExamPage() {
       )}
 
       {/* Main Question Container */}
-      <main className="max-w-4xl w-full mx-auto px-4 py-8 flex-1 flex flex-col justify-between">
+      <main className={`w-full mx-auto px-4 py-6 sm:py-8 flex-1 flex flex-col justify-between transition-all duration-300 ${
+        currentQ?.passage ? 'max-w-6xl' : 'max-w-4xl'
+      }`}>
         {currentQ && (
-          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-md animate-fade-in flex flex-col flex-1">
-            {/* Question Header & Points */}
-            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-              <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-black rounded-lg border border-brand-200">
-                السؤال {currentQuestionIndex + 1} من {questions.length}
-              </span>
-              <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                {currentQ.points} {currentQ.points === 1 ? 'درجة' : 'درجات'}
-              </span>
-            </div>
+          <div className={`grid gap-6 flex-1 ${currentQ.passage ? 'grid-cols-1 lg:grid-cols-12 items-start' : 'grid-cols-1'}`}>
+            {/* Reading Passage Side Panel (When Present) */}
+            {currentQ.passage && (
+              <div className="lg:col-span-5 flex flex-col lg:sticky lg:top-24">
+                <div className="bg-gradient-to-br from-amber-50/90 to-orange-50/50 rounded-3xl p-6 sm:p-7 border border-amber-200/90 shadow-sm flex flex-col">
+                  <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-amber-200/80">
+                    <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
+                      <BookOpen className="w-5 h-5 text-amber-700 flex-shrink-0" />
+                      <span>قطعة القراءة / الفقرة المرفقة</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
+                      نص السؤال {currentQuestionIndex + 1}
+                    </span>
+                  </div>
 
-            {/* Question Text */}
-            <div
-              className="text-base sm:text-xl font-bold text-slate-900 leading-relaxed mb-8"
-              dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.questionText) }}
-            />
+                  <div
+                    className="text-sm sm:text-base font-semibold text-slate-800 leading-loose overflow-y-auto max-h-[55vh] pr-2 scrollbar-thin select-text"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.passage) }}
+                  />
+                </div>
+              </div>
+            )}
 
-            {/* Interactive MCQ Choice Buttons */}
-            {currentQ.type === 'mcq' && (
-              <div className="space-y-3.5 my-auto">
-                {currentQ.options.map((option) => {
-                  const isSelected = currentAnswer?.selectedOption === option.key;
-                  return (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() => handleSelectOption(currentQ.id, option.key)}
-                      className={`w-full p-4 sm:p-5 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between gap-4 group ${
-                        isSelected
-                          ? 'bg-brand-50/80 border-brand-600 shadow-md shadow-brand-500/10 text-brand-950 font-bold'
-                          : 'bg-white hover:bg-slate-50/80 border-slate-200 text-slate-800 font-semibold'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <span
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black transition ${
-                            isSelected
-                              ? 'bg-brand-600 text-white'
-                              : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                          }`}
-                        >
-                          {option.key === 'a'
-                            ? 'أ'
-                            : option.key === 'b'
-                            ? 'ب'
-                            : option.key === 'c'
-                            ? 'ج'
-                            : option.key === 'd'
-                            ? 'د'
-                            : option.key.toUpperCase()}
-                        </span>
-                        <span
-                          className="text-sm sm:text-base leading-snug"
-                          dangerouslySetInnerHTML={{ __html: sanitizeRichText(option.text) }}
-                        />
-                      </div>
+            {/* Question & Options Card */}
+            <div className={`bg-white rounded-3xl p-6 sm:p-9 border border-slate-200 shadow-md animate-fade-in flex flex-col flex-1 ${
+              currentQ.passage ? 'lg:col-span-7' : ''
+            }`}>
+              {/* Question Header & Points */}
+              <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+                <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-black rounded-lg border border-brand-200">
+                  السؤال {currentQuestionIndex + 1} من {questions.length}
+                </span>
+                <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                  {currentQ.points} {currentQ.points === 1 ? 'درجة' : 'درجات'}
+                </span>
+              </div>
 
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
-                          isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
+              {/* Question Text */}
+              <div
+                className="text-base sm:text-xl font-bold text-slate-900 leading-relaxed mb-8 select-text"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.questionText) }}
+              />
+
+              {/* Interactive MCQ Choice Buttons */}
+              {currentQ.type === 'mcq' && (
+                <div className="space-y-3.5 my-auto">
+                  {currentQ.options.map((option) => {
+                    const isSelected = currentAnswer?.selectedOption === option.key;
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        onClick={() => handleSelectOption(currentQ.id, option.key)}
+                        className={`w-full p-4 sm:p-5 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between gap-4 group ${
+                          isSelected
+                            ? 'bg-brand-50/80 border-brand-600 shadow-md shadow-brand-500/10 text-brand-950 font-bold'
+                            : 'bg-white hover:bg-slate-50/80 border-slate-200 text-slate-800 font-semibold'
                         }`}
                       >
-                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                        <div className="flex items-center gap-3.5">
+                          <span
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black transition ${
+                              isSelected
+                                ? 'bg-brand-600 text-white'
+                                : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                            }`}
+                          >
+                            {option.key === 'a'
+                              ? 'أ'
+                              : option.key === 'b'
+                              ? 'ب'
+                              : option.key === 'c'
+                              ? 'ج'
+                              : option.key === 'd'
+                              ? 'د'
+                              : option.key.toUpperCase()}
+                          </span>
+                          <span
+                            className="text-sm sm:text-base leading-snug"
+                            dangerouslySetInnerHTML={{ __html: sanitizeRichText(option.text) }}
+                          />
+                        </div>
 
-            {/* Essay Question Textarea */}
-            {currentQ.type === 'essay' && (
-              <div className="my-auto space-y-2">
-                <label className="block text-xs font-bold text-slate-500">
-                  اكتب إجابتك النموذجية في المربع أدناه:
-                </label>
-                <textarea
-                  rows={7}
-                  placeholder="اكتب إجابتك هنا بالتفصيل..."
-                  value={currentAnswer?.essayAnswer || ''}
-                  onChange={(e) => handleEssayChange(currentQ.id, e.target.value)}
-                  className="w-full p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium leading-relaxed resize-y"
-                ></textarea>
-              </div>
-            )}
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
+                            isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Essay Question Textarea */}
+              {currentQ.type === 'essay' && (
+                <div className="my-auto space-y-2">
+                  <label className="block text-xs font-bold text-slate-500">
+                    اكتب إجابتك النموذجية في المربع أدناه:
+                  </label>
+                  <textarea
+                    rows={7}
+                    placeholder="اكتب إجابتك هنا بالتفصيل..."
+                    value={currentAnswer?.essayAnswer || ''}
+                    onChange={(e) => handleEssayChange(currentQ.id, e.target.value)}
+                    className="w-full p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium leading-relaxed resize-y"
+                  ></textarea>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

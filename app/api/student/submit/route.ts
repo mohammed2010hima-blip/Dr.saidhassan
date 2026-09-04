@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { GradingService } from '@/services/grading/grading-service';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const SubmitSchema = z.object({
@@ -17,6 +18,14 @@ const SubmitSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req);
+    const rateCheck = checkRateLimit(`submit:${ip}`, 30, 60 * 1000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: 'تم إرسال طلبات كثيرة في وقت قصير. يرجى الانتظار قليلاً.' },
+        { status: 429 }
+      );
+    }
     const body = await req.json();
     const parsed = SubmitSchema.safeParse(body);
 
