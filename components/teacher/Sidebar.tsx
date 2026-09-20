@@ -31,9 +31,9 @@ export function TeacherSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-white border-l border-slate-200/80 min-h-[calc(100vh-4rem)] flex flex-col justify-between p-4 hidden md:flex flex-shrink-0">
+    <aside className="w-64 bg-[#140406]/95 text-white border-l border-white/10 min-h-[calc(100vh-4rem)] flex flex-col justify-between p-4 hidden md:flex flex-shrink-0 backdrop-blur-xl">
       <div className="space-y-1.5">
-        <div className="px-3 py-2 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+        <div className="px-3 py-2 text-[11px] font-black text-[#D8C4AC]/70 uppercase tracking-wider">
           القائمة الرئيسية
         </div>
         {NAV_ITEMS.map((item) => {
@@ -46,13 +46,13 @@ export function TeacherSidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive
-                  ? 'bg-brand-50 text-brand-700 border border-brand-200/60 shadow-sm'
+                  ? 'bg-gradient-to-r from-[#800020] to-[#E11D48] text-white border border-[#E11D48]/50 shadow-[0_0_12px_rgba(225,29,72,0.4)]'
                   : item.highlight
-                  ? 'text-brand-600 hover:bg-brand-50/50'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'text-[#F3E5AB] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30'
+                  : 'text-[#D8C4AC] hover:bg-white/5 hover:text-white'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : item.highlight ? 'text-[#D4AF37]' : 'text-[#D8C4AC]'}`} />
               <span>{item.label}</span>
             </Link>
           );
@@ -60,17 +60,17 @@ export function TeacherSidebar() {
       </div>
 
       {/* Gemini AI Status Badge */}
-      <div className="bg-gradient-to-br from-brand-900 to-indigo-950 text-white rounded-2xl p-4 shadow-md text-xs relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#2A080B] to-black text-white rounded-2xl p-4 shadow-lg border border-[#D4AF37]/30 text-xs relative overflow-hidden">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-brand-300" />
-          <span className="font-bold text-white">Google Gemini AI</span>
+          <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+          <span className="font-bold text-[#F3E5AB]">Google Gemini AI</span>
         </div>
-        <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
-          تحليل امتحانات PDF ذكي وسريع واستخراج فوري لأسئلة MCQ والمقالي.
+        <p className="text-[11px] text-[#D8C4AC] leading-relaxed font-medium">
+          تحليل امتحانات PDF ذكي واستخراج فوري لأسئلة MCQ والمقالي بنقرة واحدة.
         </p>
         <Link
           href="/teacher/settings"
-          className="mt-3 block text-center py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-bold text-white transition"
+          className="mt-3 block text-center py-1.5 bg-[#D4AF37]/20 hover:bg-[#D4AF37]/30 border border-[#D4AF37]/40 rounded-lg text-[10px] font-bold text-[#F3E5AB] transition"
         >
           فحص مفتاح الـ API
         </Link>

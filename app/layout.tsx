@@ -1,11 +1,31 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
+export const viewport: Viewport = {
+  themeColor: '#0B0405',
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: 'منصة د.سعيد حسن التعليمية | خبير ومدرس أول اللغة العربية',
-  description: 'المنصة التعليمية الأولى في اللغة العربية — دروس متكاملة، امتحانات تفاعلية بالذكاء الاصطناعي، ومتابعة مستمرة للتفوق وبلوغ القمة.',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  title: {
+    default: 'منصة د. سعيد حسن التعليمية | لغة عربية للمرحلة الثانوية وتالتة إعدادي',
+    template: '%s | منصة د. سعيد حسن',
+  },
+  description: 'المنصة التعليمية المتكاملة في اللغة العربية لطلاب المرحلة الثانوية (الصف الأول والثاني والثالث الثانوي) والشهادة الإعدادية (الصف الثالث الإعدادي).',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -16,6 +36,9 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="48x48" />
+        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="512x512" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

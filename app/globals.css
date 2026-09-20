@@ -1,21 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,700&family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f7f8fc;
-  --foreground: #0b1020;
+  --background: #EEE4DA;
+  --foreground: #2A080B;
+  --burgundy: #4D0E13;
+  --burgundy-light: #800020;
+  --crimson: #E11D48;
+  --gold: #D4AF37;
+  --gold-light: #F3E5AB;
+  --sand: #D8C4AC;
+  --dusty-pink: #C8A49F;
+  --creme: #EEE4DA;
 }
 
 .dark {
-  --background: #070a12;
-  --foreground: #f8fafc;
+  --background: #140406;
+  --foreground: #EEE4DA;
+  --burgundy: #EEE4DA;
+  --sand: #2C1215;
 }
 
 html {
-  scroll-behavior: smooth;
+  background-color: var(--background);
+}
+
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 * {
@@ -24,11 +54,28 @@ html {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background-color: #EEE4DA;
+  background-image: linear-gradient(rgba(238, 228, 218, 0.92), rgba(238, 228, 218, 0.94)), url('/site-bg.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   font-family: 'Cairo', 'Tajawal', system-ui, sans-serif;
   direction: rtl;
   text-align: right;
   -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  background-color: #140406;
+  background-image: linear-gradient(rgba(20, 4, 6, 0.92), rgba(20, 4, 6, 0.95)), url('/site-bg.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+}
+
+.font-amiri {
+  font-family: 'Amiri', serif;
 }
 
 /* Luxury Custom scrollbar */
@@ -42,36 +89,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #C8A49F;
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* Background Patterns */
-.bg-grid-pattern {
-  background-image: radial-gradient(rgba(109, 61, 245, 0.12) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
-
-.dark .bg-grid-pattern {
-  background-image: radial-gradient(rgba(139, 92, 246, 0.15) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
-
-.theme-gold .bg-grid-pattern {
-  background-image: radial-gradient(rgba(217, 119, 6, 0.15) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background: #4D0E13;
 }
 
 /* Bottom fade mask for natural subject cutout */
@@ -87,17 +110,17 @@ body {
 
 /* Glassmorphism helpers */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 253, 249, 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .dark .glass-panel {
-  background: rgba(13, 19, 38, 0.75);
+  background: rgba(28, 7, 9, 0.82);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 /* Animations */
@@ -110,11 +133,11 @@ body {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes ambientPulse {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50% { opacity: 0.65; transform: scale(1.08); }
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
-.animate-ambient {
-  animation: ambientPulse 8s ease-in-out infinite;
+.animate-float-slow {
+  animation: floatSlow 4.5s ease-in-out infinite;
 }

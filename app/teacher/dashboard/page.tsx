@@ -69,14 +69,14 @@ export default function TeacherDashboardPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header & Quick Action Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-brand-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#2A080B] via-[#4D0E13] to-black rounded-3xl p-6 sm:p-8 text-white shadow-2xl border border-[#D4AF37]/35 relative overflow-hidden">
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-300 text-xs font-bold mb-3 border border-white/10">
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#F3E5AB] text-xs font-bold mb-3 border border-[#D4AF37]/40">
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>نظام الذكاء الاصطناعي جاهز</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black">مرحباً بك في لوحة التحكم 👋</h1>
-          <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1.5 max-w-xl leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl font-black font-amiri text-[#F3E5AB]">مرحباً بك في لوحة التحكم 👋</h1>
+          <p className="text-xs sm:text-sm text-[#D8C4AC] font-medium mt-1.5 max-w-xl leading-relaxed">
             ارفع ملفات امتحانات الـ PDF لتحويلها مباشرة إلى اختبارات إلكترونية تفاعلية، وتابع نتائج وتصحيحات الطلاب لحظة بلحظة.
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function TeacherDashboardPage() {
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition disabled:opacity-50"
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-[#F3E5AB] border border-white/10 transition disabled:opacity-50"
             title="تحديث البيانات"
           >
             <RotateCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -93,7 +93,7 @@ export default function TeacherDashboardPage() {
 
           <Link
             href="/teacher/exams/new"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black text-xs sm:text-sm shadow-lg shadow-brand-500/30 transition transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#E11D48] text-white font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(225,29,72,0.4)] border border-[#D4AF37]/40 transition transform hover:-translate-y-0.5"
           >
             <UploadCloud className="w-5 h-5" />
             <span>رفع امتحان PDF الآن</span>
