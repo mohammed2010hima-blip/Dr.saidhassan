@@ -10,12 +10,15 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://dsaidhassan.vercel.app'),
   title: {
     default: 'منصة د. سعيد حسن التعليمية | لغة عربية للمرحلة الثانوية وتالتة إعدادي',
     template: '%s | منصة د. سعيد حسن',
   },
   description: 'المنصة التعليمية المتكاملة في اللغة العربية لطلاب المرحلة الثانوية (الصف الأول والثاني والثالث الثانوي) والشهادة الإعدادية (الصف الثالث الإعدادي).',
+  verification: {
+    google: 'google69aa6fa6eeb43cf3',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
