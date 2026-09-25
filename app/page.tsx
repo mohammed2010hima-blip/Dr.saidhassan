@@ -3,7 +3,9 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { LandingClient, PlatformSettings, PublicExam } from '@/components/landing/LandingClient';
 
-export const revalidate = 60; // ISR: Revalidate page data every 60 seconds
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireTeacherAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
@@ -45,6 +46,13 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       data: parsed.data,
     });
 
+    try {
+      revalidatePath('/');
+      revalidatePath('/teacher/courses');
+    } catch (e) {
+      console.warn('revalidatePath warning:', e);
+    }
+
     return NextResponse.json({ success: true, message: 'تم تحديث الكورس بنجاح', course: updated });
   } catch (error) {
     return NextResponse.json({ error: 'حدث خطأ أثناء تحديث الكورس' }, { status: 500 });
@@ -69,6 +77,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     await prisma.course.delete({
       where: { id: params.id },
     });
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/teacher/courses');
+    } catch (e) {
+      console.warn('revalidatePath warning:', e);
+    }
 
     return NextResponse.json({ success: true, message: 'تم حذف الكورس بنجاح' });
   } catch (error) {

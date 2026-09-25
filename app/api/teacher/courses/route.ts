@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireTeacherAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
@@ -56,6 +57,13 @@ export async function POST(req: NextRequest) {
         ...parsed.data,
       },
     });
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/teacher/courses');
+    } catch (e) {
+      console.warn('revalidatePath warning:', e);
+    }
 
     return NextResponse.json({ success: true, message: 'تم إضافة الكورس بنجاح', course }, { status: 201 });
   } catch (error: any) {

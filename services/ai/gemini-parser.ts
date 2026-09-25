@@ -119,11 +119,11 @@ CRITICAL EXTRACTION RULES (قواعد الاستخراج الدقيق والإل
    - If a grammar question asks for the parsing (إعراب) or function of a word in a sentence (e.g. "أعرب كلمة 'نور' في قول الشاعر... / في الجملة التالية: ..."), you MUST include the ENTIRE sentence, verse, or context paragraph in "question_text" or "passage".
    - Example: "أعرب ما تحته خط في قول الشاعر: إذا غامَرْتَ في شَرَفٍ مَرُومِ ... <u>فَلا تَقْنَعْ</u> بِما دُونَ النُّجُومِ".
 
-2. PRESERVATION OF ARABIC TASHKEEL (الحفاظ الإلزامي على التشكيل):
-   - Extract every vowel, diacritic, and marker EXACTLY as typed:
-     * الفتحة ( َ ), الضمة ( ُ ), الكسرة ( ِ ), السكون ( ْ ), الشدة ( ّ )
-     * تنوين الفتح ( ً ), تنوين الضم ( ٌ ), تنوين الكسر ( ٍ )
-   - Tashkeel is mandatory for distinguishing grammatical cases and meanings in Arabic.
+2. 100% VERBATIM EXTRACTION & STRICT TASHKEEL RULES (النقل الحرفي الدقيق وضوابط التشكيل):
+   - You MUST extract words and sentences EXACTLY as printed in the PDF document without changing, adding, or inventing anything.
+   - IF the original text in the PDF has tashkeel (حركات وتشكيل على الكلمات), preserve and extract it exactly as written.
+   - IF the original text in the PDF has NO tashkeel (نص غير مشكول وبدون حركات), you MUST extract it WITHOUT TASHKEEL. DO NOT invent, generate, hypothesize, or add any tashkeel/diacritics from your own knowledge.
+   - Never vocalize or add harakat to unvocalized words. Copy verbatim.
 
 3. RICH FORMATTING:
    - Use HTML <u>word</u> tags around words that have underlines in the document (underlined for grammar/analysis).

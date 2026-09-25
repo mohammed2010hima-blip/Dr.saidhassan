@@ -89,6 +89,27 @@ export function LandingClient({ initialSettings, initialExams, initialCourses = 
   const heroBioRef = useRef<HTMLDivElement>(null);
   const modulesGridRef = useRef<HTMLDivElement>(null);
 
+  // Real-time fresh data sync on client mount
+  useEffect(() => {
+    fetch('/api/public/courses', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.courses && Array.isArray(data.courses) && data.courses.length > 0) {
+          setCourses(data.courses);
+        }
+      })
+      .catch((err) => console.error('Failed to sync courses:', err));
+
+    fetch('/api/public/exams', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.exams && Array.isArray(data.exams)) {
+          setExams(data.exams);
+        }
+      })
+      .catch((err) => console.error('Failed to sync exams:', err));
+  }, []);
+
   // Active Section Scroll Tracking (ScrollSpy)
   useEffect(() => {
     const sections = ['hero', 'modules', 'exams', 'about'];
