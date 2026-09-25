@@ -122,6 +122,7 @@ export default async function HomePage() {
   };
 
   let exams: PublicExam[] = [];
+  let courses: any[] = [];
 
   try {
     const teacher = await prisma.user.findFirst({
@@ -189,6 +190,25 @@ export default async function HomePage() {
       totalPoints: exam.totalPoints,
       attemptsCount: exam._count.attempts,
       createdAt: exam.createdAt.toISOString(),
+    }));
+
+    const dbCourses = await prisma.course.findMany({
+      where: { isPublished: true },
+      orderBy: [{ orderIndex: 'asc' }, { createdAt: 'desc' }],
+    });
+    courses = dbCourses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      stage: c.stage,
+      description: c.description,
+      badge: c.badge,
+      lessonsCount: c.lessonsCount,
+      duration: c.duration,
+      price: c.price,
+      themeColor: c.themeColor,
+      isPublished: c.isPublished,
+      orderIndex: c.orderIndex,
+      createdAt: c.createdAt.toISOString(),
     }));
   } catch (err) {
     console.error('Server Data Fetch Error on Homepage:', err);
@@ -317,7 +337,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <LandingClient initialSettings={settings} initialExams={exams} />
+      <LandingClient initialSettings={settings} initialExams={exams} initialCourses={courses} />
     </>
   );
 }

@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
+    const answersFile = formData.get('answersFile') as File | null;
+    const answersText = formData.get('answersText') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'يرجى اختيار ملف PDF لرفعه' }, { status: 400 });
@@ -49,6 +51,16 @@ export async function POST(req: NextRequest) {
         { error: 'الملف المرفوع ليس ملف PDF حقيقي صالح، يرجى التأكد من سلامة الملف.' },
         { status: 400 }
       );
+    }
+
+    // Process optional answer key file
+    let answersBuffer: Buffer | null = null;
+    let answersMimeType = 'application/pdf';
+
+    if (answersFile && answersFile.size > 0) {
+      const ansArrBuffer = await answersFile.arrayBuffer();
+      answersBuffer = Buffer.from(ansArrBuffer);
+      answersMimeType = answersFile.type || (answersFile.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
     }
 
     // Get Teacher's Gemini Key or fallback
@@ -77,11 +89,17 @@ export async function POST(req: NextRequest) {
     }
 
     const parser = new GeminiExamParser(apiKey, modelName);
-    const parsedExam = await parser.parsePDFToExam(buffer, 'application/pdf');
+    const parsedExam = await parser.parsePDFToExam(
+      buffer,
+      'application/pdf',
+      answersBuffer,
+      answersMimeType,
+      answersText
+    );
 
     return NextResponse.json({
       success: true,
-      message: 'تم تحليل الامتحان بنجاح واستخراج جميع الأسئلة',
+      message: 'تم تحليل الامتحان بنجاح واستخراج جميع الأسئلة بدقة',
       data: parsedExam,
     });
   } catch (error: any) {

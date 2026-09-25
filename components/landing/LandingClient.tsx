@@ -46,17 +46,34 @@ export interface PlatformSettings {
   teacherImageUrl: string;
 }
 
+export interface CourseItem {
+  id: string;
+  title: string;
+  stage: string;
+  description: string;
+  badge: string;
+  lessonsCount: number;
+  duration: string;
+  price?: string | null;
+  themeColor?: string | null;
+  isPublished: boolean;
+  orderIndex: number;
+  createdAt: string | Date;
+}
+
 export interface LandingClientProps {
   initialSettings: PlatformSettings;
   initialExams: PublicExam[];
+  initialCourses?: CourseItem[];
 }
 
-export function LandingClient({ initialSettings, initialExams }: LandingClientProps) {
+export function LandingClient({ initialSettings, initialExams, initialCourses = [] }: LandingClientProps) {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   // Data States initialized directly with server-rendered data
   const [exams, setExams] = useState<PublicExam[]>(initialExams);
+  const [courses, setCourses] = useState<CourseItem[]>(initialCourses);
   const [settings, setSettings] = useState<PlatformSettings>(initialSettings);
   const [codeQuery, setCodeQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -455,93 +472,130 @@ export function LandingClient({ initialSettings, initialExams }: LandingClientPr
 
         {/* Modules Cards Grid (Staggered Entrance Animation) */}
         <div ref={modulesGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: النحو */}
-          <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠١</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
-                  تأسيس + إعراب
-                </span>
+          {courses && courses.length > 0 ? (
+            courses.map((course, idx) => (
+              <div
+                key={course.id}
+                className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-amiri font-bold text-[#D4AF37]">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
+                      {course.badge || course.stage}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
+                    {course.title}
+                  </h3>
+                  <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
+                    {course.description}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
+                  <span>{course.lessonsCount} درس • {course.duration}</span>
+                  <Link
+                    href="/login"
+                    className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition"
+                  >
+                    ←
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
-                النحو
-              </h3>
-              <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
-                شرح مبسط لقواعد الإعراب، بناء الجملة، التراكيب، مع تدريبات عملية مكثفة على نظام البوكليت الحديث.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
-              <span>٣٦ محاضرة ومذكرة</span>
-              <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
-            </div>
-          </div>
+            ))
+          ) : (
+            <>
+              {/* Card 1: النحو */}
+              <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠١</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
+                      تأسيس + إعراب
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
+                    النحو
+                  </h3>
+                  <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
+                    شرح مبسط لقواعد الإعراب، بناء الجملة، التراكيب، مع تدريبات عملية مكثفة على نظام البوكليت الحديث.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
+                  <span>٣٦ محاضرة ومذكرة</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
+                </div>
+              </div>
 
-          {/* Card 2: البلاغة */}
-          <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٢</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
-                  بيان وبديع ومعاني
-                </span>
+              {/* Card 2: البلاغة */}
+              <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٢</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
+                      بيان وبديع ومعاني
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
+                    البلاغة
+                  </h3>
+                  <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
+                    تذوق مواطن الجمال وأسرار الاستعارة والتشبيه والكناية مع تدريبات استخراج الصور البيانية من الأبيات الشعرية.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
+                  <span>٢٤ محاضرة وتطبيق</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
-                البلاغة
-              </h3>
-              <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
-                تذوق مواطن الجمال وأسرار الاستعارة والتشبيه والكناية مع تدريبات استخراج الصور البيانية من الأبيات الشعرية.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
-              <span>٢٤ محاضرة وتطبيق</span>
-              <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
-            </div>
-          </div>
 
-          {/* Card 3: الصرف */}
-          <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٣</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
-                  المشتقات والمصادر
-                </span>
+              {/* Card 3: الصرف */}
+              <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٣</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
+                      المشتقات والمصادر
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
+                    الصرف
+                  </h3>
+                  <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
+                    إتقان الميزان الصرفي، صياغة المشتقات، المصادر، وأحكام الإعلال والإبدال بطريقة سهلة ومبتكرة.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
+                  <span>١٨ محاضرة وبنك أسئلة</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
-                الصرف
-              </h3>
-              <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
-                إتقان الميزان الصرفي، صياغة المشتقات، المصادر، وأحكام الإعلال والإبدال بطريقة سهلة ومبتكرة.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
-              <span>١٨ محاضرة وبنك أسئلة</span>
-              <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
-            </div>
-          </div>
 
-          {/* Card 4: الأدب العربي */}
-          <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٤</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
-                  مدارس ونصوص متحررة
-                </span>
+              {/* Card 4: الأدب العربي */}
+              <div className="bg-[#FFFDF9] dark:bg-[#1E0709] border border-[#800020]/15 dark:border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-3xl p-7 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl font-amiri font-bold text-[#D4AF37]">٠٤</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#D4AF37]/15 text-[#800020] dark:text-[#D4AF37] text-[11px] font-bold">
+                      مدارس ونصوص متحررة
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
+                    الأدب العربي
+                  </h3>
+                  <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
+                    شرح وحفظ ممتع لخصائص المدارس الشعرية وتطبيقات عملية على نصوص متحررة مطابقة لنظام الامتحانات.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
+                  <span>٢٠ محاضرة وتدريب</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
+                </div>
               </div>
-              <h3 className="text-2xl font-amiri font-bold text-[#800020] dark:text-[#F5F1E7] mb-2 group-hover:text-[#D4AF37] transition">
-                الأدب العربي
-              </h3>
-              <p className="text-xs text-[#6B4E51] dark:text-[#C8A49F] font-medium leading-relaxed mb-6">
-                شرح وحفظ ممتع لخصائص المدارس الشعرية وتطبيقات عملية على نصوص متحررة مطابقة لنظام الامتحانات.
-              </p>
-            </div>
-            <div className="flex items-center justify-between pt-4 border-t border-[#800020]/10 dark:border-[#D4AF37]/15 text-xs font-bold text-[#800020] dark:text-[#D4AF37]">
-              <span>٢٠ محاضرة وتدريب</span>
-              <span className="w-8 h-8 rounded-full bg-[#F5F1E7] dark:bg-[#2C1215] flex items-center justify-center group-hover:bg-[#800020] group-hover:text-[#D4AF37] transition">←</span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </section>
 

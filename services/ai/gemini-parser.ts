@@ -93,9 +93,15 @@ export class GeminiExamParser {
   }
 
   /**
-   * Parses a PDF file (base64) into structured exam questions with automatic fallback and retry
+   * Parses a PDF file (base64) into structured exam questions with optional Answer Key file / text attachment
    */
-  async parsePDFToExam(pdfBuffer: Buffer, mimeType: string = 'application/pdf'): Promise<ParsedExam> {
+  async parsePDFToExam(
+    pdfBuffer: Buffer,
+    mimeType: string = 'application/pdf',
+    answersBuffer?: Buffer | null,
+    answersMimeType: string = 'application/pdf',
+    answersTextPrompt?: string | null
+  ): Promise<ParsedExam> {
     if (!this.apiKey) {
       throw new Error('مفتاح Google Gemini API غير محدد. يرجى إدخاله في صفحة الإعدادات أو ملف البيئة.');
     }
@@ -103,60 +109,52 @@ export class GeminiExamParser {
     const genAI = new GoogleGenerativeAI(this.apiKey);
 
     const systemPrompt = `
-You are a world-class AI exam parser specialized in Arabic educational documents, exams, and curricula.
-Your task is to extract exam questions with 100% VERBATIM ACCURACY (استخراج حرفي تام) and RICH TEXT PARSING (تنسيق متقدم) from the provided PDF document.
+You are an expert Arabic language exam parser and educational AI auditor.
+Your mission is to extract exam questions with 100% VERBATIM ACCURACY (استخراج حرفي تام), COMPLETE SENTENCE CONTEXT (الجمل وسياق النحو كاملاً), and FULL ARABIC DIACRITICS (التشكيل الكامل).
 
-CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
-1. VERBATIM EXTRACTION (استخراج حرفي تام):
-   - Extract every word, sentence, poetry verse (بيت شعر), and punctuation mark EXACTLY as written in the original document.
-   - NEVER alter, paraphrase, summarize, omit, or invent questions or options.
+CRITICAL EXTRACTION RULES (قواعد الاستخراج الدقيق والإلزامي):
 
-2. READING COMPREHENSION PASSAGES & POETRY PARAGRAPHS (قطع القراءة والفقرات والنصوص):
-   - If a question or a set of questions refers to a reading passage, literary text, poetry piece, Quranic excerpt, or paragraph (e.g., 'اقرأ الفقرة التالية ثم أجب...', 'قال الشاعر:...'):
-   - You MUST extract the full passage text into the "passage" field for all questions related to that passage.
-   - The "question_text" should contain the specific question itself.
-   - If a question does not belong to a separate passage, set "passage": null.
+1. COMPLETE QUESTION & GRAMMAR CONTEXT (عدم بتر الجمل والنصوص):
+   - NEVER truncate, shorten, or omit context sentences in grammar (النحو) or literary questions.
+   - If a grammar question asks for the parsing (إعراب) or function of a word in a sentence (e.g. "أعرب كلمة 'نور' في قول الشاعر... / في الجملة التالية: ..."), you MUST include the ENTIRE sentence, verse, or context paragraph in "question_text" or "passage".
+   - Example: "أعرب ما تحته خط في قول الشاعر: إذا غامَرْتَ في شَرَفٍ مَرُومِ ... <u>فَلا تَقْنَعْ</u> بِما دُونَ النُّجُومِ".
 
-3. ARABIC DIACRITICS & TASHKEEL PRESERVATION (الحفاظ التام على التشكيل):
-   - You MUST preserve every Arabic Tashkeel mark present in the document:
+2. PRESERVATION OF ARABIC TASHKEEL (الحفاظ الإلزامي على التشكيل):
+   - Extract every vowel, diacritic, and marker EXACTLY as typed:
      * الفتحة ( َ ), الضمة ( ُ ), الكسرة ( ِ ), السكون ( ْ ), الشدة ( ّ )
      * تنوين الفتح ( ً ), تنوين الضم ( ٌ ), تنوين الكسر ( ٍ )
-   - This is of supreme importance in Arabic grammar (النحو) and phonetics. Do NOT strip or modify any diacritics.
+   - Tashkeel is mandatory for distinguishing grammatical cases and meanings in Arabic.
 
-4. RICH TEXT PARSING (قراءة التنسيقات المتقدمة):
-   - Preserve text underlines (الخطوط السفلية تحت الكلمات المراد إعرابها أو استخراجها) using HTML <u>word</u> tags (e.g. "أعرب ما تحته خط: قرأتُ <u>الكتابَ</u> المفيدَ").
-   - Preserve bold text using **word** or <b>word</b>.
-   - Preserve quotation marks («...» or "...") and brackets.
-   - Preserve stanza line breaks for poetry verses.
+3. RICH FORMATTING:
+   - Use HTML <u>word</u> tags around words that have underlines in the document (underlined for grammar/analysis).
+   - Use <b>word</b> for bold keywords.
+   - Use quotation marks («...» or "...") exactly as in the original text.
 
-5. QUESTION CLASSIFICATION:
-   - "mcq": Multiple Choice Questions with choices (أ, ب, ج, د or 1, 2, 3, 4 or A, B, C, D).
-   - "essay": Open-ended, essay, explanation, grammar parsing (إعراب), or free-response questions without fixed choices.
+4. PASSAGES & POETRY:
+   - For reading passages or multiple questions sharing a single text, put the shared text in "passage".
+   - For standalone questions with their own sentence, put the full sentence in "question_text" with "passage": null.
 
-6. MCQ OPTIONS MAPPING:
-   - Map options sequentially to lowercase keys: "a", "b", "c", "d" (and "e" if 5 options exist).
-   - Preserve the exact text and diacritics of each option.
+5. ANSWER KEY MATCHING (مطابقة نموذج الإجابة إن وُجد):
+   - If an Answer Key (نموذج إجابة) is provided in the document or attached files/text:
+     * Carefully match each question with its verified correct answer option ("a", "b", "c", "d").
+     * Set "correct_answer" to the matching option ID and "needs_review": false.
+   - If no answer key is provided and an answer is uncertain, set "correct_answer": null and "needs_review": true.
 
-7. ACCURATE SCORING & REVIEW FLAGS:
-   - If the correct answer is explicitly marked in the document (answer key or checkmark), specify it ("a", "b", etc.).
-   - If uncertain or not explicitly provided, set "correct_answer": null and "needs_review": true.
-
-8. OUTPUT SPECIFICATION:
-   - Output MUST be strictly valid JSON conforming to this schema without any outer explanation:
-
+6. STRICT JSON OUTPUT FORMAT:
+Conform strictly to this JSON format:
 {
-  "exam_title": "String (Title of the exam, e.g. 'امتحان شامل في اللغة العربية')",
-  "description": "String (Instructions, header, subject information)",
+  "exam_title": "String",
+  "description": "String",
   "duration_minutes": 60,
   "questions": [
     {
       "id": "q1",
       "question_number": 1,
       "type": "mcq",
-      "passage": "نص الفقرة أو القطعة أو الأبيات الشعرية كاملة التي يدور حولها السؤال إن وُجدت، أو null إن لم توجد.",
-      "question_text": "ما الفكرة الرئيسة في الفقرة السابقة؟",
+      "passage": "String or null",
+      "question_text": "نص السؤال كاملاً مع الجملة والتشكيل والخطوط السفلية <u>إن وُجدت</u>",
       "options": [
-        { "id": "a", "text": "الاختيار الأول مع التشكيل" },
+        { "id": "a", "text": "الاختيار مع التشكيل" },
         { "id": "b", "text": "الاختيار الثاني" },
         { "id": "c", "text": "الاختيار الثالث" },
         { "id": "d", "text": "الاختيار الرابع" }
@@ -164,28 +162,39 @@ CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
       "correct_answer": "a",
       "points": 1,
       "needs_review": false
-    },
-    {
-      "id": "q2",
-      "question_number": 2,
-      "type": "essay",
-      "passage": null,
-      "question_text": "أعرب ما تحته خط في جملة: «العلمُ <u>نورٌ</u>»",
-      "options": [],
-      "correct_answer": null,
-      "points": 2,
-      "needs_review": true
     }
   ]
 }
 `;
 
-    const filePart = {
+    const contents: any[] = [{ text: systemPrompt }];
+
+    // Primary Exam File
+    contents.push({
       inlineData: {
         data: pdfBuffer.toString('base64'),
         mimeType: mimeType,
       },
-    };
+    });
+    contents.push({ text: 'هذا هو ملف الامتحان الأساسي المراد استخراج جميع أسئلته حرفياً مع التشكيل والجمل الكاملة.' });
+
+    // Optional Answer Key File Attachment
+    if (answersBuffer && answersBuffer.length > 0) {
+      contents.push({
+        inlineData: {
+          data: answersBuffer.toString('base64'),
+          mimeType: answersMimeType,
+        },
+      });
+      contents.push({ text: 'هذا هو ملف نموذج الإجابات الرسمي الملحق. استخدمه لمطابقة الإجابة الصحيحة لكل سؤال بدقة.' });
+    }
+
+    // Optional Answer Key Text
+    if (answersTextPrompt && answersTextPrompt.trim().length > 0) {
+      contents.push({
+        text: `نموذج الإجابات المكتوب: \n${answersTextPrompt.trim()}\nيرجى مطابقة هذه الإجابات مع الأسئلة المستخرجة وتعيين الاختيار الصحيح.`,
+      });
+    }
 
     // Stable fallback sequence prioritized for maximum reliability and uptime
     const modelsToTry = [
@@ -211,12 +220,7 @@ CRITICAL INSTRUCTIONS FOR ARABIC EXAMS & FORMATTING:
             },
           });
 
-          const result = await model.generateContent([
-            { text: systemPrompt },
-            filePart,
-            { text: 'Analyze this PDF exam and extract all questions into the specified JSON structure.' },
-          ]);
-
+          const result = await model.generateContent(contents);
           const response = await result.response;
           const jsonText = response.text();
 
