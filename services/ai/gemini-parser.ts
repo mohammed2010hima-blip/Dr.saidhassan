@@ -110,7 +110,7 @@ export class GeminiExamParser {
 
     const systemPrompt = `
 You are an expert Arabic language exam parser and educational AI auditor.
-Your mission is to extract exam questions with 100% VERBATIM ACCURACY (استخراج حرفي تام), COMPLETE SENTENCE CONTEXT (الجمل وسياق النحو كاملاً), and FULL ARABIC DIACRITICS (التشكيل الكامل).
+Your mission is to extract exam questions with 100% VERBATIM ACCURACY (استخراج حرفي تام) and COMPLETE SENTENCE CONTEXT (الجمل وسياق النحو كاملاً).
 
 CRITICAL EXTRACTION RULES (قواعد الاستخراج الدقيق والإلزامي):
 
@@ -119,11 +119,12 @@ CRITICAL EXTRACTION RULES (قواعد الاستخراج الدقيق والإل
    - If a grammar question asks for the parsing (إعراب) or function of a word in a sentence (e.g. "أعرب كلمة 'نور' في قول الشاعر... / في الجملة التالية: ..."), you MUST include the ENTIRE sentence, verse, or context paragraph in "question_text" or "passage".
    - Example: "أعرب ما تحته خط في قول الشاعر: إذا غامَرْتَ في شَرَفٍ مَرُومِ ... <u>فَلا تَقْنَعْ</u> بِما دُونَ النُّجُومِ".
 
-2. 100% VERBATIM EXTRACTION & STRICT TASHKEEL RULES (النقل الحرفي الدقيق وضوابط التشكيل):
-   - You MUST extract words and sentences EXACTLY as printed in the PDF document without changing, adding, or inventing anything.
-   - IF the original text in the PDF has tashkeel (حركات وتشكيل على الكلمات), preserve and extract it exactly as written.
-   - IF the original text in the PDF has NO tashkeel (نص غير مشكول وبدون حركات), you MUST extract it WITHOUT TASHKEEL. DO NOT invent, generate, hypothesize, or add any tashkeel/diacritics from your own knowledge.
-   - Never vocalize or add harakat to unvocalized words. Copy verbatim.
+2. 100% VERBATIM EXTRACTION — NO TASHKEEL EVER (النقل الحرفي التام — ممنوع إضافة أي تشكيل):
+   - ABSOLUTE RULE: You MUST NEVER add, generate, invent, insert, or hallucinate any tashkeel (تشكيل) or Arabic diacritics (حركات) of your own.
+   - Extract ALL text EXACTLY character-for-character as it appears printed in the PDF — nothing more, nothing less.
+   - If the original PDF text has NO tashkeel on a word, output that word with NO tashkeel. Do NOT vocalize it.
+   - If the original PDF text happens to have tashkeel on specific characters, copy those exact characters verbatim — but NEVER add extra diacritics that are not already in the source.
+   - This rule is ABSOLUTE and overrides everything else. Even if you "know" the correct vocalization, DO NOT ADD IT.
 
 3. RICH FORMATTING:
    - Use HTML <u>word</u> tags around words that have underlines in the document (underlined for grammar/analysis).
@@ -152,12 +153,12 @@ Conform strictly to this JSON format:
       "question_number": 1,
       "type": "mcq",
       "passage": "String or null",
-      "question_text": "نص السؤال كاملاً مع الجملة والتشكيل والخطوط السفلية <u>إن وُجدت</u>",
-      "options": [
-        { "id": "a", "text": "الاختيار مع التشكيل" },
-        { "id": "b", "text": "الاختيار الثاني" },
-        { "id": "c", "text": "الاختيار الثالث" },
-        { "id": "d", "text": "الاختيار الرابع" }
+      \"question_text\": \"نص السؤال كاملاً مع الجملة والخطوط السفلية <u>إن وجدت</u> — حرفياً كما في الملف\",
+      \"options\": [
+        { \"id\": \"a\", \"text\": \"الاختيار الأول حرفياً\" },
+        { \"id\": \"b\", \"text\": \"الاختيار الثاني\" },
+        { \"id\": \"c\", \"text\": \"الاختيار الثالث\" },
+        { \"id\": \"d\", \"text\": \"الاختيار الرابع\" }
       ],
       "correct_answer": "a",
       "points": 1,
