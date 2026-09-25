@@ -113,6 +113,16 @@ export default function StudentAttemptDetailPage() {
     if (!data) return;
     setDownloading(true);
 
+    const escapeHtml = (str: string | null | undefined) => {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     const { attempt, exam, questions } = data;
 
     const questionsHtml = questions
@@ -151,7 +161,7 @@ export default function StudentAttemptDetailPage() {
                     <div style="padding: 10px 14px; background: ${bg}; border: 1.5px solid ${border}; border-radius: 12px; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
                       <div>
                         <strong style="margin-left: 8px;">[ ${opt.key.toUpperCase()} ]</strong>
-                        <span>${opt.text}</span>
+                        <span>${escapeHtml(opt.text)}</span>
                       </div>
                       ${badge}
                     </div>
@@ -164,10 +174,10 @@ export default function StudentAttemptDetailPage() {
           optionsHtml = `
             <div style="margin-top: 12px; padding: 14px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
               <strong style="display:block; margin-bottom: 6px; color:#475569; font-size: 12px;">إجابة الطالب:</strong>
-              <div style="font-size: 14px; color:#0F172A; white-space: pre-wrap; line-height: 1.6;">${studentAns.essayAnswer || 'لم تتم كتابة إجابة.'}</div>
+              <div style="font-size: 14px; color:#0F172A; white-space: pre-wrap; line-height: 1.6;">${escapeHtml(studentAns.essayAnswer) || 'لم تتم كتابة إجابة.'}</div>
               ${
                 studentAns.teacherFeedback
-                  ? `<div style="margin-top: 10px; padding: 10px; background: #FEF3C7; border-radius: 8px; color: #92400E; font-size: 12px;"><strong>تعليق المعلم:</strong> ${studentAns.teacherFeedback}</div>`
+                  ? `<div style="margin-top: 10px; padding: 10px; background: #FEF3C7; border-radius: 8px; color: #92400E; font-size: 12px;"><strong>تعليق المعلم:</strong> ${escapeHtml(studentAns.teacherFeedback)}</div>`
                   : ''
               }
             </div>
@@ -193,10 +203,10 @@ export default function StudentAttemptDetailPage() {
               </span>
             </div>
 
-            ${q.passage ? `<div style="padding: 10px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 13px; color: #78350F; margin-bottom: 12px; line-height: 1.6; white-space: pre-line;"><strong>القطعة / الأبيات:</strong><br/>${q.passage}</div>` : ''}
+            ${q.passage ? `<div style="padding: 10px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 13px; color: #78350F; margin-bottom: 12px; line-height: 1.6; white-space: pre-line;"><strong>القطعة / الأبيات:</strong><br/>${escapeHtml(q.passage)}</div>` : ''}
 
             <div style="font-size: 15px; font-weight: bold; color: #2A080B; line-height: 1.7; margin-bottom: 8px;">
-              ${q.questionText}
+              ${escapeHtml(q.questionText)}
             </div>
 
             ${optionsHtml}
@@ -209,7 +219,7 @@ export default function StudentAttemptDetailPage() {
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>تقرير إجابات الطالب - ${attempt.studentName} - ${exam.title}</title>
+  <title>تقرير إجابات الطالب - ${escapeHtml(attempt.studentName)} - ${escapeHtml(exam.title)}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&display=swap');
     body {
@@ -265,10 +275,10 @@ export default function StudentAttemptDetailPage() {
     </div>
 
     <div class="info-grid">
-      <div><strong>الطالب:</strong> ${attempt.studentName}</div>
-      <div><strong>الهاتف:</strong> ${attempt.studentPhone || 'غير مسجل'}</div>
-      <div><strong>المجموعة:</strong> ${attempt.studentGroup}</div>
-      <div><strong>الاختبار:</strong> ${exam.title} (${exam.code})</div>
+      <div><strong>الطالب:</strong> ${escapeHtml(attempt.studentName)}</div>
+      <div><strong>الهاتف:</strong> ${escapeHtml(attempt.studentPhone) || 'غير مسجل'}</div>
+      <div><strong>المجموعة:</strong> ${escapeHtml(attempt.studentGroup)}</div>
+      <div><strong>الاختبار:</strong> ${escapeHtml(exam.title)} (${escapeHtml(exam.code)})</div>
       <div><strong>تاريخ التسليم:</strong> ${new Date(attempt.submittedAt).toLocaleString('ar-EG')}</div>
       <div><strong>الوقت المستغرق:</strong> ${formatTime(attempt.timeSpentSeconds)}</div>
     </div>

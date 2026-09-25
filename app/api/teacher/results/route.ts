@@ -13,25 +13,38 @@ export async function GET(req: NextRequest) {
   const group = searchParams.get('group');
   const search = searchParams.get('search');
 
-  const whereClause: any = {
-    exam: { teacherId: auth.user.userId },
-    status: { in: ['SUBMITTED', 'GRADED'] },
-  };
+  const andConditions: any[] = [
+    { exam: { teacherId: auth.user.userId } },
+    { status: { in: ['SUBMITTED', 'GRADED'] } },
+  ];
 
-  if (examId) {
-    whereClause.examId = examId;
+  if (examId && examId !== 'all') {
+    andConditions.push({
+      OR: [
+        { examId: examId },
+        { exam: { code: examId } },
+        { exam: { title: examId } },
+      ],
+    });
   }
 
   if (group && group !== 'all') {
-    whereClause.studentGroup = group;
+    andConditions.push({ studentGroup: group });
   }
 
-  if (search) {
-    whereClause.OR = [
-      { studentName: { contains: search } },
-      { studentPhone: { contains: search } },
-    ];
+  if (search && search.trim()) {
+    const s = search.trim();
+    andConditions.push({
+      OR: [
+        { studentName: { contains: s } },
+        { studentPhone: { contains: s } },
+      ],
+    });
   }
+
+  const whereClause = {
+    AND: andConditions,
+  };
 
   const attempts = await prisma.examAttempt.findMany({
     where: whereClause,

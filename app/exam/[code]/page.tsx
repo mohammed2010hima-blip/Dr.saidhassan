@@ -190,28 +190,29 @@ export default function StudentExamPage() {
     }
   }, [isExamStarted, exam, attemptId, answers, currentQuestionIndex, timeSpent, timeLeftSeconds, isCompleted]);
 
-  // Timer Effect (Updates locally every second)
+  // Keep ref to latest handleFinalSubmit for timer callback
+  const finalSubmitRef = useRef<(isAuto?: boolean) => void>(() => {});
+
+  // Timer Effect (Updates locally every second without resetting interval)
   useEffect(() => {
     if (!isExamStarted || isCompleted) return;
 
     const timer = setInterval(() => {
       setTimeSpent((prev) => prev + 1);
 
-      if (timeLeftSeconds !== null) {
-        setTimeLeftSeconds((prev) => {
-          if (prev === null) return null;
-          if (prev <= 1) {
-            clearInterval(timer);
-            handleFinalSubmit(true); // Auto-submit on time expiration
-            return 0;
-          }
-          return prev - 1;
-        });
-      }
+      setTimeLeftSeconds((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(timer);
+          finalSubmitRef.current(true); // Auto-submit on time expiration safely via ref
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isExamStarted, isCompleted, timeLeftSeconds]);
+  }, [isExamStarted, isCompleted]);
 
   // Start Exam (1 request to create attempt, or restore from local draft)
   const handleStartExam = async (e: React.FormEvent) => {
@@ -312,6 +313,9 @@ export default function StudentExamPage() {
     }));
   };
 
+  // Assign ref to handleFinalSubmit
+  finalSubmitRef.current = handleFinalSubmit;
+
   // Single-Batch Final Submit Handler ("حفظ وإرسال الإجابات")
   const handleFinalSubmit = async (isAuto: boolean = false) => {
     if (!attemptId || isSubmitting) return;
@@ -363,7 +367,6 @@ export default function StudentExamPage() {
     } catch (err: any) {
       const errorText = err.message || 'حدث خطأ في الاتصال أثناء تسليم الاختبار. إجاباتك محفوظة على جهازك، يرجى المحاولة مجدداً.';
       setSubmitError(errorText);
-      alert(errorText);
     } finally {
       setIsSubmitting(false);
     }

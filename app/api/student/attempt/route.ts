@@ -51,13 +51,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Check duplicate attempts if disabled by teacher
-    if (!exam.allowMultipleAttempts && studentPhone) {
+    if (!exam.allowMultipleAttempts) {
+      const duplicateWhere: any = {
+        examId,
+        status: { in: ['SUBMITTED', 'GRADED'] },
+      };
+
+      if (studentPhone && studentPhone.trim()) {
+        duplicateWhere.studentPhone = studentPhone.trim();
+      } else if (studentName && studentName.trim()) {
+        duplicateWhere.studentName = studentName.trim();
+      }
+
       const existingAttempt = await prisma.examAttempt.findFirst({
-        where: {
-          examId,
-          studentPhone: studentPhone.trim(),
-          status: { in: ['SUBMITTED', 'GRADED'] },
-        },
+        where: duplicateWhere,
       });
 
       if (existingAttempt) {

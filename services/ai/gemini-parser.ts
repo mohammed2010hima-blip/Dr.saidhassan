@@ -1,7 +1,3 @@
-if (typeof process !== 'undefined') {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-}
-
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
@@ -59,9 +55,9 @@ export class GeminiExamParser {
     const modelsToTry = [
       this.modelName,
       'gemini-2.5-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
-    ].filter((v, i, a) => a.indexOf(v) === i);
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+    ].filter((v, i, a) => !!v && a.indexOf(v) === i);
 
     let lastErrorMsg = '';
 
@@ -153,12 +149,12 @@ Conform strictly to this JSON format:
       "question_number": 1,
       "type": "mcq",
       "passage": "String or null",
-      \"question_text\": \"نص السؤال كاملاً مع الجملة والخطوط السفلية <u>إن وجدت</u> — حرفياً كما في الملف\",
-      \"options\": [
-        { \"id\": \"a\", \"text\": \"الاختيار الأول حرفياً\" },
-        { \"id\": \"b\", \"text\": \"الاختيار الثاني\" },
-        { \"id\": \"c\", \"text\": \"الاختيار الثالث\" },
-        { \"id\": \"d\", \"text\": \"الاختيار الرابع\" }
+      "question_text": "نص السؤال كاملاً مع الجملة والخطوط السفلية <u>إن وجدت</u> — حرفياً كما في الملف",
+      "options": [
+        { "id": "a", "text": "الاختيار الأول حرفياً" },
+        { "id": "b", "text": "الاختيار الثاني" },
+        { "id": "c", "text": "الاختيار الثالث" },
+        { "id": "d", "text": "الاختيار الرابع" }
       ],
       "correct_answer": "a",
       "points": 1,
@@ -177,7 +173,7 @@ Conform strictly to this JSON format:
         mimeType: mimeType,
       },
     });
-    contents.push({ text: 'هذا هو ملف الامتحان الأساسي المراد استخراج جميع أسئلته حرفياً مع التشكيل والجمل الكاملة.' });
+    contents.push({ text: 'هذا هو ملف الامتحان الأساسي المراد استخراج جميع أسئلته حرفياً تماماً وبنفس النص دون إضافة أي تشكيل زائد.' });
 
     // Optional Answer Key File Attachment
     if (answersBuffer && answersBuffer.length > 0) {
@@ -201,8 +197,8 @@ Conform strictly to this JSON format:
     const modelsToTry = [
       this.modelName,
       'gemini-2.5-flash',
-      'gemini-3.6-flash',
-      'gemini-3.5-flash-lite',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
     ].filter((v, i, a) => !!v && a.indexOf(v) === i);
 
     let lastError: any = null;

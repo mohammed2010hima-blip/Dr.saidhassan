@@ -55,9 +55,9 @@ export async function GET(req: NextRequest) {
     teacherImageUrl: user?.teacherImageUrl || '/teacher.png',
     brandTheme: user?.brandTheme || 'violet',
     availableModels: [
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (موصى به - أحدث وأكثر استقراراً)' },
-      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash (الجيل الأحدث - سريع)' },
-      { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite (خفيف وسريع)' },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (موصى به - أحدث وأكثر استقراراً وتفوقاً)' },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (سريع واقتصادي)' },
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (دقة استخراج فائقة للنصوص المعقدة)' },
     ],
   });
 }

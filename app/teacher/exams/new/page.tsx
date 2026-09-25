@@ -158,8 +158,8 @@ export default function NewExamPage() {
         questionText: q.question_text || '',
         passage: q.passage || null,
         points: q.points || (q.type === 'essay' ? 5 : 1),
-        correctOptionId: q.correct_answer || (q.type === 'mcq' ? 'a' : null),
-        needsReview: q.needs_review || false,
+        correctOptionId: q.correct_answer || null,
+        needsReview: q.needs_review || (q.type === 'mcq' && !q.correct_answer),
         options: (q.options || []).map((opt: any) => ({
           optionKey: opt.id || 'a',
           text: opt.text || '',
@@ -268,6 +268,7 @@ export default function NewExamPage() {
       }
 
       success(publishImmediately ? 'تم اعتماد ونشر الاختبار بنجاح للطلاب! 🎉' : 'تم حفظ مسودة الاختبار بنجاح!');
+      setSavingExam(false);
       router.push(`/teacher/exams/${data.exam.id}/review`);
     } catch (err: any) {
       toastError(err.message || 'حدث خطأ أثناء حفظ الاختبار');

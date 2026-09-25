@@ -318,7 +318,7 @@ export function LandingClient({ initialSettings, initialExams, initialCourses = 
               <div className="flex items-center gap-1.5">
                 <span>الامتحانات التفاعلية</span>
                 {exams.length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#E11D48] text-white font-mono font-bold">
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#E11D48] text-white font-mono font-bold">
                     {exams.length}
                   </span>
                 )}
