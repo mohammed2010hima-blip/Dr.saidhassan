@@ -40,7 +40,7 @@ export class GeminiExamParser {
 
   constructor(apiKey?: string, modelName?: string) {
     this.apiKey = apiKey || process.env.GOOGLE_GEMINI_API_KEY || '';
-    this.modelName = modelName || process.env.DEFAULT_GEMINI_MODEL || 'gemini-2.5-flash';
+    this.modelName = modelName || process.env.DEFAULT_GEMINI_MODEL || 'gemini-1.5-flash';
   }
 
   /**
@@ -54,9 +54,11 @@ export class GeminiExamParser {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const modelsToTry = [
       this.modelName,
-      'gemini-2.5-flash',
       'gemini-1.5-flash',
-      'gemini-1.5-pro',
+      'gemini-1.5-flash-latest',
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-pro-latest',
     ].filter((v, i, a) => !!v && a.indexOf(v) === i);
 
     let lastErrorMsg = '';
@@ -196,9 +198,11 @@ Conform strictly to this JSON format:
     // Stable fallback sequence prioritized for maximum reliability and uptime
     const modelsToTry = [
       this.modelName,
-      'gemini-2.5-flash',
       'gemini-1.5-flash',
-      'gemini-1.5-pro',
+      'gemini-1.5-flash-latest',
+      'gemini-2.0-flash',
+      'gemini-2.5-flash',
+      'gemini-1.5-pro-latest',
     ].filter((v, i, a) => !!v && a.indexOf(v) === i);
 
     let lastError: any = null;
