@@ -13,7 +13,8 @@ const StartAttemptSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
-    const rateCheck = checkRateLimit(`attempt:${ip}`, 30, 60 * 1000);
+    // High capacity rate limit to support whole classrooms / centers on same network (300/min)
+    const rateCheck = checkRateLimit(`attempt_ip:${ip}`, 300, 60 * 1000);
     if (!rateCheck.success) {
       return NextResponse.json(
         { error: 'تم إرسال طلبات كثيرة في وقت قصير. يرجى الانتظار قليلاً.' },

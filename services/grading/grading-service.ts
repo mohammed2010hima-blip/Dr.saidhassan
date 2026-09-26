@@ -48,7 +48,7 @@ export class GradingService {
 
       if (q.type === 'mcq') {
         const isCorrect = submitted?.selectedOption && q.correctOptionId
-          ? submitted.selectedOption.toLowerCase() === q.correctOptionId.toLowerCase()
+          ? submitted.selectedOption.trim().toLowerCase() === q.correctOptionId.trim().toLowerCase()
           : false;
 
         const pointsAwarded = isCorrect ? q.points : 0;
