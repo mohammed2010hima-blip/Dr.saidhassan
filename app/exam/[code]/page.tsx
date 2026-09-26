@@ -313,9 +313,6 @@ export default function StudentExamPage() {
     }));
   };
 
-  // Assign ref to handleFinalSubmit
-  finalSubmitRef.current = handleFinalSubmit;
-
   // Single-Batch Final Submit Handler ("حفظ وإرسال الإجابات")
   const handleFinalSubmit = async (isAuto: boolean = false) => {
     if (!attemptId || isSubmitting) return;
@@ -371,6 +368,9 @@ export default function StudentExamPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Assign ref to handleFinalSubmit after definition
+  finalSubmitRef.current = handleFinalSubmit;
 
   if (loading) {
     return (
