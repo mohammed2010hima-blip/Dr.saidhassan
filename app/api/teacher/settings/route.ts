@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     hasApiKey: !!rawKey || !!process.env.GOOGLE_GEMINI_API_KEY,
     maskedApiKey: maskedKey || (process.env.GOOGLE_GEMINI_API_KEY ? '****** (من ملف البيئة)' : ''),
-    geminiModel: user?.geminiModel || process.env.DEFAULT_GEMINI_MODEL || 'gemini-1.5-flash',
+    geminiModel: user?.geminiModel || process.env.DEFAULT_GEMINI_MODEL || 'gemini-2.5-flash',
     platformName: user?.platformName || 'منصة د.سعيد حسن',
     teacherName: user?.name || 'الدكتور سعيد حسن',
     teacherTitle: user?.teacherTitle || 'خبير ومدرس أول اللغة العربية',
@@ -55,10 +55,10 @@ export async function GET(req: NextRequest) {
     teacherImageUrl: user?.teacherImageUrl || '/teacher.png',
     brandTheme: user?.brandTheme || 'violet',
     availableModels: [
-      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (موصى به - فائق السرعة والاستقرار)' },
-      { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash Latest (النسخة الأحدث)' },
-      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (الجيل الثاني المتطور)' },
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (موصى به - أحدث وأسرع نموذج لاستخراج الامتحانات)' },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (فائق السرعة والاستقرار)' },
+      { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash Latest (النسخة المستقرة)' },
+      { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (الجيل المتطور)' },
       { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro Latest (دقة فائقة في النصوص المعقدة)' },
     ],
   });
