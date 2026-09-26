@@ -1,3 +1,11 @@
+if (typeof process !== 'undefined') {
+  try {
+    const dns = require('node:dns');
+    dns.setDefaultResultOrder('ipv4first');
+  } catch {}
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
