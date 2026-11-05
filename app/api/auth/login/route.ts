@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const token = signToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: (user.role as 'teacher' | 'admin') || 'teacher',
       name: user.name,
     });
 

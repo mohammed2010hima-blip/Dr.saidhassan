@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { getStudentSession } from '@/lib/auth';
 import { z } from 'zod';
 
 const StartAttemptSchema = z.object({
@@ -12,15 +12,8 @@ const StartAttemptSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = getClientIp(req);
-    // High capacity rate limit to support whole classrooms / centers on same network (300/min)
-    const rateCheck = checkRateLimit(`attempt_ip:${ip}`, 300, 60 * 1000);
-    if (!rateCheck.success) {
-      return NextResponse.json(
-        { error: 'تم إرسال طلبات كثيرة في وقت قصير. يرجى الانتظار قليلاً.' },
-        { status: 429 }
-      );
-    }
+    const studentSession = await getStudentSession(req);
+
     const body = await req.json();
     const parsed = StartAttemptSchema.safeParse(body);
 
@@ -42,52 +35,116 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'هذا الاختبار غير متاح للطلاب حالياً' }, { status: 403 });
     }
 
+    const now = new Date();
+    if (exam.startsAt && new Date(exam.startsAt) > now) {
+      return NextResponse.json({ error: 'لم يبدأ موعد هذا الامتحان بعد.' }, { status: 403 });
+    }
+    if (exam.endsAt && new Date(exam.endsAt) < now) {
+      return NextResponse.json({ error: 'انتهى الموعد المحدد لأداء هذا الامتحان.' }, { status: 403 });
+    }
+
+    let resolvedStudentId: string | null = null;
+    let finalStudentName = studentName.trim();
+    let finalStudentPhone = studentPhone.trim();
+    let finalStudentGroup = studentGroup.trim();
+
+    if (studentSession && studentSession.studentId) {
+      const student = await prisma.student.findUnique({
+        where: { id: studentSession.studentId },
+      });
+
+      if (student) {
+        resolvedStudentId = student.id;
+        finalStudentName = student.name;
+        finalStudentPhone = student.phone;
+        finalStudentGroup = student.groupName;
+
+        // Verify stage targeting
+        if (exam.targetStage && exam.targetStage !== 'all' && exam.targetStage !== student.stage) {
+          return NextResponse.json(
+            { error: `هذا الاختبار مخصص لطلاب (${exam.targetStage}) فقط ولا يمكنك الدخول إليه من صفك الدراسي الحالي.` },
+            { status: 403 }
+          );
+        }
+
+        // Verify group targeting
+        if (exam.targetGroup && exam.targetGroup !== 'all' && exam.targetGroup !== student.groupName) {
+          return NextResponse.json(
+            { error: `هذا الاختبار مخصص لـ (${exam.targetGroup}) فقط ولا يمكنك الدخول إليه من مجموعتك الحالية.` },
+            { status: 403 }
+          );
+        }
+
+        // Verify semester targeting
+        if (exam.targetSemester && exam.targetSemester !== 'all' && exam.targetSemester !== student.semester) {
+          return NextResponse.json(
+            { error: `هذا الاختبار مخصص لـ (${exam.targetSemester}) فقط.` },
+            { status: 403 }
+          );
+        }
+      }
+    } else {
+      // If student is not logged in, check if their phone belongs to a registered student account
+      if (finalStudentPhone) {
+        const studentByPhone = await prisma.student.findUnique({
+          where: { phone: finalStudentPhone },
+        });
+
+        if (studentByPhone) {
+          return NextResponse.json(
+            {
+              error: 'هذا الرقم مرتبط بحساب طالب مسجل، يرجى تسجيل الدخول إلى حسابك أولاً ليتم حفظ الامتحان ونتيجتك في لوحة تحكمك.',
+              requiresLogin: true,
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // Required fields check
-    if (exam.requirePhone && (!studentPhone || studentPhone.trim().length < 6)) {
+    if (exam.requirePhone && (!finalStudentPhone || finalStudentPhone.length < 6)) {
       return NextResponse.json({ error: 'رقم الهاتف مطلوب لبدء هذا الاختبار' }, { status: 400 });
     }
 
-    if (exam.requireGroup && (!studentGroup || studentGroup.trim() === '')) {
+    if (exam.requireGroup && !finalStudentGroup) {
       return NextResponse.json({ error: 'يرجى اختيار مجموعتك الدراسية' }, { status: 400 });
     }
 
-    // Check duplicate attempts if disabled by teacher
-    if (!exam.allowMultipleAttempts) {
-      const duplicateWhere: any = {
+    // Check attempt limits
+    const maxAllowed = exam.maxAttempts || (exam.allowMultipleAttempts ? 99 : 1);
+    const existingAttemptsCount = await prisma.examAttempt.count({
+      where: {
         examId,
         status: { in: ['SUBMITTED', 'GRADED'] },
-      };
+        OR: [
+          ...(resolvedStudentId ? [{ studentId: resolvedStudentId }] : []),
+          ...(finalStudentPhone ? [{ studentPhone: finalStudentPhone }] : []),
+        ],
+      },
+    });
 
-      if (studentPhone && studentPhone.trim()) {
-        duplicateWhere.studentPhone = studentPhone.trim();
-      } else if (studentName && studentName.trim()) {
-        duplicateWhere.studentName = studentName.trim();
-      }
-
-      const existingAttempt = await prisma.examAttempt.findFirst({
-        where: duplicateWhere,
-      });
-
-      if (existingAttempt) {
-        return NextResponse.json(
-          {
-            error: 'لقد قمت بأداء هذا الاختبار من قبل مسبقاً، ولا يسمح بأكثر من محاولة واحدة.',
-            alreadySubmitted: true,
-          },
-          { status: 403 }
-        );
-      }
+    if (existingAttemptsCount >= maxAllowed) {
+      return NextResponse.json(
+        {
+          error: `لقد استنفدت الحد الأقصى للمحاولات المسموح بها لهذا الاختبار (${maxAllowed} محاولة).`,
+          alreadySubmitted: true,
+        },
+        { status: 403 }
+      );
     }
 
-    // Create new attempt
+    // Create new attempt linked to student account
     const attempt = await prisma.examAttempt.create({
       data: {
         examId,
-        studentName: studentName.trim(),
-        studentPhone: studentPhone.trim(),
-        studentGroup: studentGroup.trim() || null,
+        studentId: resolvedStudentId,
+        studentName: finalStudentName,
+        studentPhone: finalStudentPhone,
+        studentGroup: finalStudentGroup || null,
         startedAt: new Date(),
         status: 'IN_PROGRESS',
+        isApproved: false,
       },
     });
 

@@ -12,39 +12,33 @@ export async function GET(req: NextRequest) {
   const examId = searchParams.get('examId');
   const group = searchParams.get('group');
   const search = searchParams.get('search');
+  const approvalFilter = searchParams.get('approved'); // 'true', 'false', 'all'
 
-  const andConditions: any[] = [
-    { exam: { teacherId: auth.user.userId } },
-    { status: { in: ['SUBMITTED', 'GRADED'] } },
-  ];
+  const whereClause: any = {
+    exam: { teacherId: auth.user.userId },
+    status: { in: ['SUBMITTED', 'GRADED'] },
+  };
+
+  if (approvalFilter === 'true') {
+    whereClause.isApproved = true;
+  } else if (approvalFilter === 'false') {
+    whereClause.isApproved = false;
+  }
 
   if (examId && examId !== 'all') {
-    andConditions.push({
-      OR: [
-        { examId: examId },
-        { exam: { code: examId } },
-        { exam: { title: examId } },
-      ],
-    });
+    whereClause.examId = examId;
   }
 
   if (group && group !== 'all') {
-    andConditions.push({ studentGroup: group });
+    whereClause.studentGroup = group;
   }
 
-  if (search && search.trim()) {
-    const s = search.trim();
-    andConditions.push({
-      OR: [
-        { studentName: { contains: s } },
-        { studentPhone: { contains: s } },
-      ],
-    });
+  if (search) {
+    whereClause.OR = [
+      { studentName: { contains: search } },
+      { studentPhone: { contains: search } },
+    ];
   }
-
-  const whereClause = {
-    AND: andConditions,
-  };
 
   const attempts = await prisma.examAttempt.findMany({
     where: whereClause,
@@ -85,6 +79,9 @@ export async function GET(req: NextRequest) {
     isPassed: attempt.isPassed,
     timeSpentSeconds: attempt.timeSpentSeconds,
     status: attempt.status,
+    isApproved: attempt.isApproved,
+    approvedAt: attempt.approvedAt,
+    studentId: attempt.studentId,
     needsEssayGrading: attempt._count.answers > 0,
     submittedAt: attempt.submittedAt || attempt.createdAt,
   }));

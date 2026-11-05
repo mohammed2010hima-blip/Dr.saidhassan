@@ -48,7 +48,7 @@ export class GradingService {
 
       if (q.type === 'mcq') {
         const isCorrect = submitted?.selectedOption && q.correctOptionId
-          ? submitted.selectedOption.trim().toLowerCase() === q.correctOptionId.trim().toLowerCase()
+          ? submitted.selectedOption.toLowerCase() === q.correctOptionId.toLowerCase()
           : false;
 
         const pointsAwarded = isCorrect ? q.points : 0;
@@ -85,12 +85,25 @@ export class GradingService {
     const isPassed = percentage >= (attempt.exam.passingPercentage || 50);
     const status = hasUngradedEssays ? 'SUBMITTED' : 'GRADED';
 
+    // Link studentId if missing by matching studentPhone
+    let studentIdToLink = attempt.studentId;
+    if (!studentIdToLink && attempt.studentPhone) {
+      const studentByPhone = await prisma.student.findUnique({
+        where: { phone: attempt.studentPhone },
+      });
+      if (studentByPhone) {
+        studentIdToLink = studentByPhone.id;
+      }
+    }
+
     const updatedAttempt = await prisma.examAttempt.update({
       where: { id: attemptId },
       data: {
+        studentId: studentIdToLink,
         submittedAt: new Date(),
         timeSpentSeconds,
         status,
+        isApproved: false, // Must be approved by teacher before appearing to student
         mcqScore,
         essayScore,
         totalScore,

@@ -35,7 +35,6 @@ interface QuestionItem {
   questionNumber: number;
   type: 'mcq' | 'essay';
   questionText: string;
-  passage?: string | null;
   points: number;
   correctOptionId?: string | null;
   needsReview?: boolean;
@@ -60,23 +59,32 @@ export default function ExamReviewPage() {
   const [durationMinutes, setDurationMinutes] = useState<number | null>(60);
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'CLOSED'>('DRAFT');
   const [allowMultipleAttempts, setAllowMultipleAttempts] = useState(false);
+  const [maxAttempts, setMaxAttempts] = useState<number>(1);
+  const [targetStage, setTargetStage] = useState('all');
+  const [targetGroup, setTargetGroup] = useState('all');
+  const [targetSemester, setTargetSemester] = useState('all');
+  const [startsAt, setStartsAt] = useState('');
+  const [endsAt, setEndsAt] = useState('');
+  const [examType, setExamType] = useState('quiz');
   const [requirePhone, setRequirePhone] = useState(true);
   const [requireGroup, setRequireGroup] = useState(true);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [groupsList, setGroupsList] = useState<string[]>([]);
   const [availableGroups, setAvailableGroups] = useState<string[]>([]);
+  const [stagesList, setStagesList] = useState<{ id: string; name: string }[]>([]);
 
   // Publish Success Modal
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
-    // Fetch exam details and teacher groups
+    // Fetch exam details, teacher groups, and stages
     Promise.all([
       fetch(`/api/teacher/exams/${examId}`).then((r) => r.json()),
       fetch('/api/teacher/groups').then((r) => r.json()),
+      fetch('/api/teacher/stages').then((r) => r.json()).catch(() => ({ stages: [] })),
     ])
-      .then(([examData, groupsData]) => {
+      .then(([examData, groupsData, stagesData]) => {
         if (examData.error) {
           setErrorMsg(examData.error);
           return;
@@ -88,7 +96,14 @@ export default function ExamReviewPage() {
         setDescription(e.description || '');
         setDurationMinutes(e.durationMinutes);
         setStatus(e.status);
-        setAllowMultipleAttempts(e.allowMultipleAttempts);
+        setAllowMultipleAttempts(e.allowMultipleAttempts || false);
+        setMaxAttempts(e.maxAttempts || 1);
+        setTargetStage(e.targetStage || 'all');
+        setTargetGroup(e.targetGroup || 'all');
+        setTargetSemester(e.targetSemester || 'all');
+        setStartsAt(e.startsAt ? new Date(e.startsAt).toISOString().slice(0, 16) : '');
+        setEndsAt(e.endsAt ? new Date(e.endsAt).toISOString().slice(0, 16) : '');
+        setExamType(e.examType || 'quiz');
         setRequirePhone(e.requirePhone);
         setRequireGroup(e.requireGroup);
         setGroupsList(e.groupsList || []);
@@ -98,7 +113,6 @@ export default function ExamReviewPage() {
           questionNumber: q.questionNumber || idx + 1,
           type: q.type,
           questionText: q.questionText,
-          passage: q.passage || null,
           points: q.points,
           correctOptionId: q.correctOptionId,
           needsReview: q.needsReview,
@@ -110,8 +124,11 @@ export default function ExamReviewPage() {
 
         setQuestions(mappedQuestions);
 
-        if (groupsData.groups) {
+        if (groupsData && groupsData.groups) {
           setAvailableGroups(groupsData.groups.map((g: any) => g.name));
+        }
+        if (stagesData && stagesData.stages) {
+          setStagesList(stagesData.stages);
         }
       })
       .catch((err) => {
@@ -188,14 +205,21 @@ export default function ExamReviewPage() {
         description,
         durationMinutes: durationMinutes ? Number(durationMinutes) : null,
         allowMultipleAttempts,
+        maxAttempts: allowMultipleAttempts ? Number(maxAttempts) || 1 : 1,
+        targetStage,
+        targetGroup,
+        targetSemester,
+        startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+        endsAt: endsAt ? new Date(endsAt).toISOString() : null,
+        examType,
         requirePhone,
-        groupsList: requireGroup ? (groupsList.length > 0 ? groupsList : availableGroups) : [],
+        requireGroup,
+        groupsList: groupsList.length > 0 ? groupsList : availableGroups,
         status: publishImmediately ? 'PUBLISHED' : status,
         questions: questions.map((q, idx) => ({
           questionNumber: idx + 1,
           type: q.type,
           questionText: q.questionText,
-          passage: q.passage || null,
           points: Number(q.points) || 1,
           correctOptionId: q.type === 'mcq' ? q.correctOptionId : null,
           needsReview: q.needsReview || false,
@@ -387,8 +411,95 @@ export default function ExamReviewPage() {
             ></textarea>
           </div>
 
+          {/* Targeting & Schedule */}
+          <div className="md:col-span-2 pt-2 border-t border-slate-100">
+            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-3">
+              استهداف الطلاب والجدول الزمني
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">نوع الاختبار</label>
+                <select
+                  value={examType}
+                  onChange={(e) => setExamType(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                >
+                  <option value="quiz">كويز قصير</option>
+                  <option value="monthly">امتحان شهري</option>
+                  <option value="final">امتحان نهائي / شامل</option>
+                  <option value="homework">تدريب / واجب</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">الصف الدراسي المستهدف</label>
+                <select
+                  value={targetStage}
+                  onChange={(e) => setTargetStage(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                >
+                  <option value="all">جميع الصفوف</option>
+                  {stagesList.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">المجموعة الدراسية المستهدفة</label>
+                <select
+                  value={targetGroup}
+                  onChange={(e) => setTargetGroup(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                >
+                  <option value="all">جميع المجموعات</option>
+                  {availableGroups.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">الفصل الدراسي</label>
+                <select
+                  value={targetSemester}
+                  onChange={(e) => setTargetSemester(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                >
+                  <option value="all">الكل</option>
+                  <option value="الفصل الدراسي الأول">الفصل الدراسي الأول</option>
+                  <option value="الفصل الدراسي الثاني">الفصل الدراسي الثاني</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">تاريخ ووقت البدء (اختياري)</label>
+                <input
+                  type="datetime-local"
+                  value={startsAt}
+                  onChange={(e) => setStartsAt(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">تاريخ ووقت الانتهاء (اختياري)</label>
+                <input
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Additional Options */}
-          <div className="flex flex-wrap gap-6 md:col-span-2 pt-2 text-xs font-semibold text-slate-700">
+          <div className="flex flex-wrap items-center gap-6 md:col-span-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-700">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -398,6 +509,20 @@ export default function ExamReviewPage() {
               />
               <span>السماح للطالب بأكثر من محاولة</span>
             </label>
+
+            {allowMultipleAttempts && (
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">أقصى عدد محاولات:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={maxAttempts}
+                  onChange={(e) => setMaxAttempts(Math.max(1, Number(e.target.value)))}
+                  className="w-16 px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-center font-bold"
+                />
+              </div>
+            )}
 
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -501,27 +626,6 @@ export default function ExamReviewPage() {
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-
-            {/* Reading Passage / Context Paragraph */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700">
-                  قطعة القراءة / الفقرة المرفقة (اختياري - تظهر للطلاب بجانب السؤال)
-                </label>
-                {q.passage && (
-                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                    مرفق معها فقرة قراءة
-                  </span>
-                )}
-              </div>
-              <textarea
-                rows={2}
-                placeholder="إذا كان السؤال يدور حول قطعة قراءة أو أبيات شعرية أو فقرة نصية، اكتبها هنا لتظهر للطالب أثناء الإجابة..."
-                value={q.passage || ''}
-                onChange={(e) => handleUpdateQuestion(qIndex, 'passage', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-amber-200/80 bg-amber-50/30 text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition"
-              ></textarea>
             </div>
 
             {/* Question Text */}

@@ -118,11 +118,42 @@ export class StatsService {
       .sort((a, b) => b.failRate - a.failRate)
       .slice(0, 5);
 
+    // Student Account Metrics
+    const totalRegisteredStudents = await prisma.student.count();
+    const allStudents = await prisma.student.findMany({ select: { stage: true, groupName: true } });
+    const studentsByStage: Record<string, number> = {};
+    const studentsByGroup: Record<string, number> = {};
+
+    for (const s of allStudents) {
+      studentsByStage[s.stage] = (studentsByStage[s.stage] || 0) + 1;
+      studentsByGroup[s.groupName] = (studentsByGroup[s.groupName] || 0) + 1;
+    }
+
+    const approvedResultsCount = await prisma.examAttempt.count({
+      where: {
+        exam: { teacherId },
+        isApproved: true,
+      },
+    });
+
+    const pendingApprovalCount = await prisma.examAttempt.count({
+      where: {
+        exam: { teacherId },
+        status: { in: ['SUBMITTED', 'GRADED'] },
+        isApproved: false,
+      },
+    });
+
     return {
       totalExams,
       activeExams,
       totalAttempts,
       uniqueStudents,
+      totalRegisteredStudents,
+      studentsByStage,
+      studentsByGroup,
+      approvedResultsCount,
+      pendingApprovalCount,
       avgScore,
       highestScore,
       lowestScore,

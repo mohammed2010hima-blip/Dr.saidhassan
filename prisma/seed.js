@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./generated-client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
@@ -62,6 +62,55 @@ async function main() {
   });
 
   console.log(`Teacher account ready: ${teacher.email} / password123`);
+
+  // 4b. Create default Academic Stages
+  await prisma.academicStage.deleteMany({});
+  const defaultStages = [
+    { name: 'الصف الأول الثانوي', orderIndex: 1 },
+    { name: 'الصف الثاني الثانوي', orderIndex: 2 },
+    { name: 'الصف الثالث الثانوي', orderIndex: 3 }
+  ];
+
+  for (const st of defaultStages) {
+    await prisma.academicStage.create({
+      data: {
+        teacherId: teacher.id,
+        name: st.name,
+        orderIndex: st.orderIndex,
+      },
+    });
+  }
+
+  // 4c. Create sample student account
+  await prisma.notification.deleteMany({});
+  await prisma.student.deleteMany({});
+  const studentPasswordHash = await bcrypt.hash('student123', 10);
+  const sampleStudent = await prisma.student.create({
+    data: {
+      name: 'أحمد محمود علي',
+      username: 'ahmed_mahmoud',
+      email: 'student@example.com',
+      passwordHash: studentPasswordHash,
+      phone: '01012345678',
+      parentPhone: '01198765432',
+      stage: 'الصف الثالث الثانوي',
+      groupName: 'مجموعة السبت والثلاثاء (المحاضرة العامة)',
+      semester: 'الفصل الدراسي الأول',
+      isActive: true,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      studentId: sampleStudent.id,
+      title: 'مرحباً بك في المنصة 🎉',
+      message: 'تم تفعيل حسابك بنجاح في منصة د.سعيد حسن التعليمية. نتمنى لك دوام التفوق!',
+      type: 'system',
+      link: '/student/dashboard',
+    },
+  });
+
+  console.log(`Sample student ready: phone 01012345678 / username ahmed_mahmoud / password student123`);
 
   // 5. Create default groups
   const defaultGroups = [

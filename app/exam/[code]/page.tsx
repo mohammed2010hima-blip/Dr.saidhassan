@@ -20,8 +20,7 @@ import {
   GraduationCap,
   Loader2,
   FileCheck,
-  RotateCcw,
-  BookOpen,
+  RotateCcw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Modal } from '@/components/ui/Modal';
@@ -36,7 +35,6 @@ interface Question {
   id: string;
   questionNumber: number;
   type: 'mcq' | 'essay';
-  passage?: string | null;
   questionText: string;
   points: number;
   options: QuestionOption[];
@@ -72,6 +70,9 @@ export default function StudentExamPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [requiresLogin, setRequiresLogin] = useState(false);
+  const [targetingBlocked, setTargetingBlocked] = useState(false);
+  const [currentStudent, setCurrentStudent] = useState<any>(null);
 
   // Gate Form State
   const [studentName, setStudentName] = useState('');
@@ -122,10 +123,21 @@ export default function StudentExamPage() {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) {
+          if (data.targetingBlocked) {
+            setTargetingBlocked(true);
+          }
           throw new Error(data.error || 'فشل تحميل بيانات الاختبار');
         }
         setExam(data.exam);
         setQuestions(data.questions);
+
+        if (data.currentStudent) {
+          setCurrentStudent(data.currentStudent);
+          setStudentName(data.currentStudent.name || '');
+          setStudentPhone(data.currentStudent.phone || '');
+          setStudentGroup(data.currentStudent.groupName || '');
+          setConsentAccepted(true);
+        }
 
         // Check if there is an existing draft saved in LocalStorage for this exam
         try {
@@ -190,29 +202,28 @@ export default function StudentExamPage() {
     }
   }, [isExamStarted, exam, attemptId, answers, currentQuestionIndex, timeSpent, timeLeftSeconds, isCompleted]);
 
-  // Keep ref to latest handleFinalSubmit for timer callback
-  const finalSubmitRef = useRef<(isAuto?: boolean) => void>(() => {});
-
-  // Timer Effect (Updates locally every second without resetting interval)
+  // Timer Effect (Updates locally every second)
   useEffect(() => {
     if (!isExamStarted || isCompleted) return;
 
     const timer = setInterval(() => {
       setTimeSpent((prev) => prev + 1);
 
-      setTimeLeftSeconds((prev) => {
-        if (prev === null) return null;
-        if (prev <= 1) {
-          clearInterval(timer);
-          finalSubmitRef.current(true); // Auto-submit on time expiration safely via ref
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (timeLeftSeconds !== null) {
+        setTimeLeftSeconds((prev) => {
+          if (prev === null) return null;
+          if (prev <= 1) {
+            clearInterval(timer);
+            handleFinalSubmit(true); // Auto-submit on time expiration
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isExamStarted, isCompleted]);
+  }, [isExamStarted, isCompleted, timeLeftSeconds]);
 
   // Start Exam (1 request to create attempt, or restore from local draft)
   const handleStartExam = async (e: React.FormEvent) => {
@@ -276,6 +287,9 @@ export default function StudentExamPage() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (data.requiresLogin) {
+          setRequiresLogin(true);
+        }
         throw new Error(data.error || 'فشل بدء الاختبار');
       }
 
@@ -364,13 +378,11 @@ export default function StudentExamPage() {
     } catch (err: any) {
       const errorText = err.message || 'حدث خطأ في الاتصال أثناء تسليم الاختبار. إجاباتك محفوظة على جهازك، يرجى المحاولة مجدداً.';
       setSubmitError(errorText);
+      alert(errorText);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Assign ref to handleFinalSubmit after definition
-  finalSubmitRef.current = handleFinalSubmit;
 
   if (loading) {
     return (
@@ -391,14 +403,37 @@ export default function StudentExamPage() {
             <AlertCircle className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-black text-slate-900 mb-2">تنبيه</h2>
-          <p className="text-sm font-semibold text-slate-600 mb-6">{errorMsg}</p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span>العودة للصفحة الرئيسية</span>
-          </Link>
+          <p className="text-sm font-semibold text-slate-600 mb-6 leading-relaxed">{errorMsg}</p>
+
+          <div className="flex flex-col gap-3">
+            {requiresLogin && (
+              <Link
+                href={`/student/login?redirect=/exam/${code}`}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-sm hover:bg-brand-700 shadow-md transition"
+              >
+                <span>تسجيل الدخول إلى حساب الطالب</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            )}
+
+            {targetingBlocked && (
+              <Link
+                href="/student/dashboard"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-600 text-white font-bold text-sm hover:bg-brand-700 shadow-md transition"
+              >
+                <span>العودة إلى لوحة تحكم الطالب</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            )}
+
+            <Link
+              href="/"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>العودة للصفحة الرئيسية</span>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -450,13 +485,33 @@ export default function StudentExamPage() {
             </div>
           </div>
 
-          <Link
-            href="/"
-            className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md transition"
-          >
-            <span>العودة للصفحة الرئيسية</span>
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
+          <div className="flex flex-col gap-3">
+            {currentStudent ? (
+              <Link
+                href="/student/dashboard"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition"
+              >
+                <span>الانتقال إلى لوحة تحكم الطالب</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/student/login"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold text-xs border border-brand-200 transition"
+              >
+                <span>تسجيل الدخول إلى حساب الطالب لعرض النتائج</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+            )}
+
+            <Link
+              href="/"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+            >
+              <span>العودة للصفحة الرئيسية</span>
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -516,6 +571,33 @@ export default function StudentExamPage() {
               <GraduationCap className="w-5 h-5 text-brand-600" />
               <span>بيانات الطالب قبل بدء الاختبار</span>
             </h2>
+
+            {currentStudent ? (
+              <div className="mb-5 p-4 rounded-2xl bg-brand-50 border border-brand-200 text-brand-900 text-xs font-bold flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-brand-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-black text-sm">أهلاً بك، {currentStudent.name}</p>
+                    <p className="text-brand-700/80 font-medium mt-0.5">
+                      الصف: {currentStudent.stage} • المجموعة: {currentStudent.groupName}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 bg-brand-100 text-brand-800 rounded-lg text-[11px] font-black">
+                  حساب موثق ✓
+                </span>
+              </div>
+            ) : (
+              <div className="mb-5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex items-center justify-between">
+                <span>لديك حساب شخصي مسجل على المنصة؟</span>
+                <Link
+                  href={`/student/login?redirect=/exam/${code}`}
+                  className="font-bold text-brand-600 hover:text-brand-700 underline"
+                >
+                  تسجيل الدخول
+                </Link>
+              </div>
+            )}
 
             {errorMsg && (
               <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
@@ -725,122 +807,93 @@ export default function StudentExamPage() {
       )}
 
       {/* Main Question Container */}
-      <main className={`w-full mx-auto px-4 py-6 sm:py-8 flex-1 flex flex-col justify-between transition-all duration-300 ${
-        currentQ?.passage ? 'max-w-6xl' : 'max-w-4xl'
-      }`}>
+      <main className="max-w-4xl w-full mx-auto px-4 py-8 flex-1 flex flex-col justify-between">
         {currentQ && (
-          <div className={`grid gap-6 flex-1 ${currentQ.passage ? 'grid-cols-1 lg:grid-cols-12 items-start' : 'grid-cols-1'}`}>
-            {/* Reading Passage Side Panel (When Present) */}
-            {currentQ.passage && (
-              <div className="lg:col-span-5 flex flex-col lg:sticky lg:top-24">
-                <div className="bg-gradient-to-br from-amber-50/90 to-orange-50/50 rounded-3xl p-6 sm:p-7 border border-amber-200/90 shadow-sm flex flex-col">
-                  <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-amber-200/80">
-                    <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
-                      <BookOpen className="w-5 h-5 text-amber-700 flex-shrink-0" />
-                      <span>قطعة القراءة / الفقرة المرفقة</span>
-                    </div>
-                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
-                      نص السؤال {currentQuestionIndex + 1}
-                    </span>
-                  </div>
+          <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-md animate-fade-in flex flex-col flex-1">
+            {/* Question Header & Points */}
+            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
+              <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-black rounded-lg border border-brand-200">
+                السؤال {currentQuestionIndex + 1} من {questions.length}
+              </span>
+              <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                {currentQ.points} {currentQ.points === 1 ? 'درجة' : 'درجات'}
+              </span>
+            </div>
 
-                  <div
-                    className="text-sm sm:text-base font-semibold text-slate-800 leading-loose overflow-y-auto max-h-[55vh] pr-2 scrollbar-thin select-text"
-                    dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.passage) }}
-                  />
-                </div>
+            {/* Question Text */}
+            <div
+              className="text-base sm:text-xl font-bold text-slate-900 leading-relaxed mb-8"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.questionText) }}
+            />
+
+            {/* Interactive MCQ Choice Buttons */}
+            {currentQ.type === 'mcq' && (
+              <div className="space-y-3.5 my-auto">
+                {currentQ.options.map((option) => {
+                  const isSelected = currentAnswer?.selectedOption === option.key;
+                  return (
+                    <button
+                      key={option.key}
+                      type="button"
+                      onClick={() => handleSelectOption(currentQ.id, option.key)}
+                      className={`w-full p-4 sm:p-5 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between gap-4 group ${
+                        isSelected
+                          ? 'bg-brand-50/80 border-brand-600 shadow-md shadow-brand-500/10 text-brand-950 font-bold'
+                          : 'bg-white hover:bg-slate-50/80 border-slate-200 text-slate-800 font-semibold'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <span
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black transition ${
+                            isSelected
+                              ? 'bg-brand-600 text-white'
+                              : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                          }`}
+                        >
+                          {option.key === 'a'
+                            ? 'أ'
+                            : option.key === 'b'
+                            ? 'ب'
+                            : option.key === 'c'
+                            ? 'ج'
+                            : option.key === 'd'
+                            ? 'د'
+                            : option.key.toUpperCase()}
+                        </span>
+                        <span
+                          className="text-sm sm:text-base leading-snug"
+                          dangerouslySetInnerHTML={{ __html: sanitizeRichText(option.text) }}
+                        />
+                      </div>
+
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
+                          isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
 
-            {/* Question & Options Card */}
-            <div className={`bg-white rounded-3xl p-6 sm:p-9 border border-slate-200 shadow-md animate-fade-in flex flex-col flex-1 ${
-              currentQ.passage ? 'lg:col-span-7' : ''
-            }`}>
-              {/* Question Header & Points */}
-              <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
-                <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-black rounded-lg border border-brand-200">
-                  السؤال {currentQuestionIndex + 1} من {questions.length}
-                </span>
-                <span className="text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                  {currentQ.points} {currentQ.points === 1 ? 'درجة' : 'درجات'}
-                </span>
+            {/* Essay Question Textarea */}
+            {currentQ.type === 'essay' && (
+              <div className="my-auto space-y-2">
+                <label className="block text-xs font-bold text-slate-500">
+                  اكتب إجابتك النموذجية في المربع أدناه:
+                </label>
+                <textarea
+                  rows={7}
+                  placeholder="اكتب إجابتك هنا بالتفصيل..."
+                  value={currentAnswer?.essayAnswer || ''}
+                  onChange={(e) => handleEssayChange(currentQ.id, e.target.value)}
+                  className="w-full p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium leading-relaxed resize-y"
+                ></textarea>
               </div>
-
-              {/* Question Text */}
-              <div
-                className="text-base sm:text-xl font-bold text-slate-900 leading-relaxed mb-8 select-text"
-                dangerouslySetInnerHTML={{ __html: sanitizeRichText(currentQ.questionText) }}
-              />
-
-              {/* Interactive MCQ Choice Buttons */}
-              {currentQ.type === 'mcq' && (
-                <div className="space-y-3.5 my-auto">
-                  {currentQ.options.map((option) => {
-                    const isSelected = currentAnswer?.selectedOption === option.key;
-                    return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        onClick={() => handleSelectOption(currentQ.id, option.key)}
-                        className={`w-full p-4 sm:p-5 rounded-2xl border-2 text-right transition-all duration-200 flex items-center justify-between gap-4 group ${
-                          isSelected
-                            ? 'bg-brand-50/80 border-brand-600 shadow-md shadow-brand-500/10 text-brand-950 font-bold'
-                            : 'bg-white hover:bg-slate-50/80 border-slate-200 text-slate-800 font-semibold'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <span
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black transition ${
-                              isSelected
-                                ? 'bg-brand-600 text-white'
-                                : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                            }`}
-                          >
-                            {option.key === 'a'
-                              ? 'أ'
-                              : option.key === 'b'
-                              ? 'ب'
-                              : option.key === 'c'
-                              ? 'ج'
-                              : option.key === 'd'
-                              ? 'د'
-                              : option.key.toUpperCase()}
-                          </span>
-                          <span
-                            className="text-sm sm:text-base leading-snug"
-                            dangerouslySetInnerHTML={{ __html: sanitizeRichText(option.text) }}
-                          />
-                        </div>
-
-                        <div
-                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
-                            isSelected ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
-                          }`}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Essay Question Textarea */}
-              {currentQ.type === 'essay' && (
-                <div className="my-auto space-y-2">
-                  <label className="block text-xs font-bold text-slate-500">
-                    اكتب إجابتك النموذجية في المربع أدناه:
-                  </label>
-                  <textarea
-                    rows={7}
-                    placeholder="اكتب إجابتك هنا بالتفصيل..."
-                    value={currentAnswer?.essayAnswer || ''}
-                    onChange={(e) => handleEssayChange(currentQ.id, e.target.value)}
-                    className="w-full p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition font-medium leading-relaxed resize-y"
-                  ></textarea>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         )}
 

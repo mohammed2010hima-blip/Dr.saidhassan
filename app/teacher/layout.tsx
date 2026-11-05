@@ -1,17 +1,8 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import { getSessionUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { TeacherNavbar } from '@/components/teacher/Navbar';
 import { TeacherSidebar } from '@/components/teacher/Sidebar';
-
-export const metadata: Metadata = {
-  title: 'لوحة تحكم المعلم | منصة د. سعيد حسن',
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
 
 export default async function TeacherLayout({
   children,
@@ -25,7 +16,7 @@ export default async function TeacherLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#EEE4DA] dark:bg-[#140406] flex flex-col font-arabic">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-arabic">
       <TeacherNavbar user={user} />
       <div className="flex flex-1">
         <TeacherSidebar />

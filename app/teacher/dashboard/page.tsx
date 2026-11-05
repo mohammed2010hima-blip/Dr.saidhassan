@@ -67,33 +67,41 @@ export default function TeacherDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-fade-in pb-12">
+    <div className="space-y-8 animate-fade-in">
       {/* Header & Quick Action Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#2A080B] via-[#4D0E13] to-black rounded-3xl p-6 sm:p-8 text-white shadow-2xl border border-[#D4AF37]/35 relative overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-brand-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#F3E5AB] text-xs font-bold mb-3 border border-[#D4AF37]/40">
-            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-brand-300 text-xs font-bold mb-3 border border-white/10">
+            <Sparkles className="w-3.5 h-3.5" />
             <span>نظام الذكاء الاصطناعي جاهز</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-amiri text-[#F3E5AB]">مرحباً بك في لوحة التحكم 👋</h1>
-          <p className="text-xs sm:text-sm text-[#D8C4AC] font-medium mt-1.5 max-w-xl leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl font-black">مرحباً بك في لوحة التحكم 👋</h1>
+          <p className="text-xs sm:text-sm text-slate-300 font-medium mt-1.5 max-w-xl leading-relaxed">
             ارفع ملفات امتحانات الـ PDF لتحويلها مباشرة إلى اختبارات إلكترونية تفاعلية، وتابع نتائج وتصحيحات الطلاب لحظة بلحظة.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 relative z-10 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 relative z-10 self-start sm:self-auto">
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-[#F3E5AB] border border-white/10 transition disabled:opacity-50"
+            className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition disabled:opacity-50"
             title="تحديث البيانات"
           >
             <RotateCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
 
           <Link
+            href="/teacher/students"
+            className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm border border-white/15 transition"
+          >
+            <Users className="w-4 h-4" />
+            <span>إدارة الطلاب</span>
+          </Link>
+
+          <Link
             href="/teacher/exams/new"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#DC2626] to-[#E11D48] text-white font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(225,29,72,0.4)] border border-[#D4AF37]/40 transition transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 text-white font-black text-xs sm:text-sm shadow-lg shadow-brand-500/30 transition transform hover:-translate-y-0.5"
           >
             <UploadCloud className="w-5 h-5" />
             <span>رفع امتحان PDF الآن</span>
@@ -101,68 +109,141 @@ export default function TeacherDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Exams */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-5 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F4] dark:bg-[#2C1215] text-[#800020] dark:text-[#D4AF37] flex items-center justify-center flex-shrink-0 border border-[#F8CFD5] dark:border-[#D4AF37]/30">
-            <BookOpen className="w-6 h-6" />
+      {/* Pending Approval Notice Banner */}
+      {stats?.pendingApprovalCount > 0 && (
+        <div className="p-5 rounded-3xl bg-amber-50 border border-amber-200/90 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-amber-500/20">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-amber-950">
+                يوجد {stats.pendingApprovalCount} نتيجة بانتظار الاعتماد
+              </h3>
+              <p className="text-xs text-amber-800 font-medium mt-0.5">
+                لن يتمكن الطلاب من رؤية درجاتهم النهائية حتى تقوم بمراجعتها واعتمادها من لوحة التحكم.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/teacher/results?approval=pending"
+            className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-md transition self-start sm:self-auto"
+          >
+            <span>مراجعة واعتماد النتائج</span>
+            <ChevronLeft className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+
+      {/* 6 Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Card 1: Registered Students */}
+        <Link
+          href="/teacher/students"
+          className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-brand-300 transition group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Users className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-bold text-brand-600 group-hover:underline">عرض</span>
           </div>
           <div>
-            <span className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC] block">إجمالي الاختبارات</span>
-            <span className="text-2xl font-black text-[#800020] dark:text-[#F3E5AB] mt-0.5 block">
+            <span className="text-xs font-bold text-slate-400 block">الطلاب المسجلون</span>
+            <span className="text-2xl font-black text-slate-900 mt-0.5 block">
+              {stats?.totalRegisteredStudents ?? 0}
+            </span>
+            <span className="text-[11px] font-semibold text-indigo-600">
+              حساب نشط
+            </span>
+          </div>
+        </Link>
+
+        {/* Card 2: Exams */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block">إجمالي الاختبارات</span>
+            <span className="text-2xl font-black text-slate-900 mt-0.5 block">
               {stats?.totalExams ?? 0}
             </span>
-            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="text-[11px] font-semibold text-emerald-600">
               {stats?.activeExams ?? 0} نشط ومنشور
             </span>
           </div>
         </div>
 
-        {/* Card 2: Attempts */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-5 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 border border-emerald-200 dark:border-emerald-800/40">
-            <GraduationCap className="w-6 h-6" />
+        {/* Card 3: Attempts */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+            <GraduationCap className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC] block">إجمالي المحاولات</span>
-            <span className="text-2xl font-black text-[#800020] dark:text-[#F3E5AB] mt-0.5 block">
+            <span className="text-xs font-bold text-slate-400 block">إجمالي المحاولات</span>
+            <span className="text-2xl font-black text-slate-900 mt-0.5 block">
               {stats?.totalAttempts ?? 0}
             </span>
-            <span className="text-[11px] font-semibold text-[#660019] dark:text-[#D8C4AC]">
-              {stats?.uniqueStudents ?? 0} طالب متميز
+            <span className="text-[11px] font-semibold text-slate-500">
+              {stats?.uniqueStudents ?? 0} طالب أدى الاختبار
             </span>
           </div>
         </div>
 
-        {/* Card 3: Avg Score */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-5 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F4] dark:bg-[#2C1215] text-[#800020] dark:text-[#D4AF37] flex items-center justify-center flex-shrink-0 border border-[#F8CFD5] dark:border-[#D4AF37]/30">
-            <TrendingUp className="w-6 h-6" />
+        {/* Card 4: Pending Approvals */}
+        <Link
+          href="/teacher/results?approval=pending"
+          className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between hover:border-amber-300 transition group"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Clock className="w-5 h-5" />
+            </div>
+            {stats?.pendingApprovalCount > 0 && (
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+            )}
           </div>
           <div>
-            <span className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC] block">متوسط الدرجات</span>
-            <span className="text-2xl font-black text-[#800020] dark:text-[#F3E5AB] mt-0.5 block">
+            <span className="text-xs font-bold text-slate-400 block">بانتظار الاعتماد</span>
+            <span className="text-2xl font-black text-amber-600 mt-0.5 block">
+              {stats?.pendingApprovalCount ?? 0}
+            </span>
+            <span className="text-[11px] font-semibold text-emerald-600">
+              {stats?.approvedResultsCount ?? 0} معتمد
+            </span>
+          </div>
+        </Link>
+
+        {/* Card 5: Avg Score */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-slate-400 block">متوسط الدرجات</span>
+            <span className="text-2xl font-black text-slate-900 mt-0.5 block">
               {stats?.avgScore ?? 0}%
             </span>
-            <span className="text-[11px] font-semibold text-[#800020] dark:text-[#D4AF37]">
+            <span className="text-[11px] font-semibold text-purple-600">
               نسبة النجاح: {stats?.passRate ?? 0}%
             </span>
           </div>
         </div>
 
-        {/* Card 4: Avg Time */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-5 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-200 dark:border-amber-800/40">
-            <Clock className="w-6 h-6" />
+        {/* Card 6: Pass Rate */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC] block">متوسط زمن الاختبار</span>
-            <span className="text-2xl font-black text-[#800020] dark:text-[#F3E5AB] mt-0.5 block">
-              {Math.round((stats?.avgTimeSpent ?? 0) / 60)} دقيقة
+            <span className="text-xs font-bold text-slate-400 block">أعلى درجة مسجلة</span>
+            <span className="text-2xl font-black text-slate-900 mt-0.5 block">
+              {stats?.highestScore ?? 0}%
             </span>
-            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
-              أعلى نسبة: {stats?.highestScore ?? 0}%
+            <span className="text-[11px] font-semibold text-slate-500">
+              متوسط الزمن: {Math.round((stats?.avgTimeSpent ?? 0) / 60)} د
             </span>
           </div>
         </div>
@@ -171,16 +252,16 @@ export default function TeacherDashboardPage() {
       {/* Two Columns Grid: Recent Exams & Recent Student Submissions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Column 1: Latest Exams */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-6 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-5 pb-3 border-b border-[#800020]/10 dark:border-white/10">
-              <h2 className="text-base font-black text-[#800020] dark:text-[#F3E5AB] flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#800020] dark:text-[#D4AF37]" />
+            <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-brand-600" />
                 <span>آخر الاختبارات المضافة</span>
               </h2>
               <Link
                 href="/teacher/exams"
-                className="text-xs font-bold text-[#800020] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
               >
                 <span>عرض الكل</span>
                 <ChevronLeft className="w-4 h-4" />
@@ -190,16 +271,16 @@ export default function TeacherDashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse"></div>
+                  <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse"></div>
                 ))}
               </div>
             ) : recentExams.length === 0 ? (
               <div className="text-center py-10">
-                <FileText className="w-10 h-10 text-[#D4AF37]/40 mx-auto mb-2" />
-                <p className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC]">لا توجد اختبارات مضافة بعد</p>
+                <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-500">لا توجد اختبارات مضافة بعد</p>
                 <Link
                   href="/teacher/exams/new"
-                  className="mt-3 inline-block text-xs font-bold text-[#800020] dark:text-[#F3E5AB] hover:underline"
+                  className="mt-3 inline-block text-xs font-bold text-brand-600 hover:underline"
                 >
                   اضغط هنا لرفع أول امتحان PDF
                 </Link>
@@ -209,11 +290,11 @@ export default function TeacherDashboardPage() {
                 {recentExams.map((exam) => (
                   <div
                     key={exam.id}
-                    className="p-4 rounded-2xl border border-[#800020]/10 dark:border-white/10 hover:border-[#800020]/30 bg-white dark:bg-[#140406] transition flex items-center justify-between gap-3"
+                    className="p-4 rounded-2xl border border-slate-100 hover:border-slate-300 bg-slate-50/50 hover:bg-white transition flex items-center justify-between gap-3"
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-black px-2 py-0.5 bg-[#FDF2F4] dark:bg-[#2C1215] text-[#800020] dark:text-[#D4AF37] rounded border border-[#F8CFD5] dark:border-[#D4AF37]/30">
+                        <span className="text-[10px] font-black px-2 py-0.5 bg-brand-50 text-brand-700 rounded border border-brand-200">
                           {exam.code}
                         </span>
                         <span
@@ -228,17 +309,17 @@ export default function TeacherDashboardPage() {
                           {exam.status === 'PUBLISHED' ? 'منشور' : exam.status === 'DRAFT' ? 'مسودة' : 'مغلق'}
                         </span>
                       </div>
-                      <h4 className="text-xs sm:text-sm font-bold text-[#800020] dark:text-[#F5EFEB] line-clamp-1">
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-1">
                         {exam.title}
                       </h4>
-                      <div className="text-[11px] text-[#660019] dark:text-[#D8C4AC] font-medium mt-1">
+                      <div className="text-[11px] text-slate-400 font-medium mt-1">
                         {exam.questionsCount} سؤال • {exam.attemptsCount} طالب شارك
                       </div>
                     </div>
 
                     <Link
                       href={`/teacher/exams/${exam.id}/review`}
-                      className="px-3.5 py-1.5 rounded-xl border border-[#D4AF37]/40 bg-[#FDF2F4] dark:bg-[#2C1215] hover:bg-[#F8CFD5] text-xs font-bold text-[#800020] dark:text-[#F3E5AB] transition flex-shrink-0"
+                      className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition flex-shrink-0"
                     >
                       مراجعة
                     </Link>
@@ -248,10 +329,10 @@ export default function TeacherDashboardPage() {
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-[#800020]/10 dark:border-white/10 text-center">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
             <Link
               href="/teacher/exams/new"
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-[#800020] to-[#E11D48] hover:from-[#660019] hover:to-[#C0153D] text-white text-xs font-bold shadow-md shadow-[#800020]/25 transition"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition"
             >
               <UploadCloud className="w-4 h-4" />
               <span>رفع ملف امتحان جديد</span>
@@ -260,16 +341,16 @@ export default function TeacherDashboardPage() {
         </div>
 
         {/* Column 2: Latest Student Submissions */}
-        <div className="bg-[#FFFDF9] dark:bg-[#1E0709] rounded-3xl p-6 border border-[#800020]/15 dark:border-[#D4AF37]/25 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-5 pb-3 border-b border-[#800020]/10 dark:border-white/10">
-              <h2 className="text-base font-black text-[#800020] dark:text-[#F3E5AB] flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-[#800020] dark:text-[#D4AF37]" />
+            <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+              <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-emerald-600" />
                 <span>آخر نتائج الطلاب المستلمة</span>
               </h2>
               <Link
                 href="/teacher/results"
-                className="text-xs font-bold text-[#800020] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
               >
                 <span>جميع النتائج</span>
                 <ChevronLeft className="w-4 h-4" />
@@ -279,14 +360,14 @@ export default function TeacherDashboardPage() {
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-slate-100 dark:bg-white/5 rounded-xl animate-pulse"></div>
+                  <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse"></div>
                 ))}
               </div>
             ) : recentResults.length === 0 ? (
               <div className="text-center py-10">
-                <Users className="w-10 h-10 text-[#D4AF37]/40 mx-auto mb-2" />
-                <p className="text-xs font-bold text-[#660019] dark:text-[#D8C4AC]">لم يقم أي طالب بأداء الاختبارات بعد</p>
-                <p className="text-[11px] text-[#660019]/70 dark:text-[#D8C4AC]/70 mt-1">
+                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-500">لم يقم أي طالب بأداء الاختبارات بعد</p>
+                <p className="text-[11px] text-slate-400 mt-1">
                   شارك رابط الاختبار مع طلابك لتبدأ النتائج بالظهور هنا فورياً
                 </p>
               </div>
@@ -296,29 +377,29 @@ export default function TeacherDashboardPage() {
                   <Link
                     key={result.id}
                     href={`/teacher/results/${result.id}`}
-                    className="p-4 rounded-2xl border border-[#800020]/10 dark:border-white/10 hover:border-[#800020]/30 bg-white dark:bg-[#140406] transition flex items-center justify-between gap-3 block group"
+                    className="p-4 rounded-2xl border border-slate-100 hover:border-brand-300 bg-slate-50/50 hover:bg-white transition flex items-center justify-between gap-3 block group"
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-[#800020] dark:text-[#F3E5AB] group-hover:underline">
+                        <span className="text-xs font-bold text-slate-900 group-hover:text-brand-600 transition">
                           {result.studentName}
                         </span>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-[#FDF2F4] dark:bg-[#2C1215] text-[#800020] dark:text-[#D4AF37] rounded border border-[#F8CFD5] dark:border-[#D4AF37]/30">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">
                           {result.studentGroup}
                         </span>
                         {result.needsEssayGrading && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-900 rounded">
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded">
                             بانتظار تصحيح المقالي
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-[#660019] dark:text-[#D8C4AC] font-medium">
+                      <div className="text-[11px] text-slate-500 font-medium">
                         {result.examTitle}
                       </div>
                     </div>
 
                     <div className="text-left flex-shrink-0">
-                      <span className="text-sm font-black text-[#800020] dark:text-[#F3E5AB] block" dir="ltr">
+                      <span className="text-sm font-black text-slate-900 block" dir="ltr">
                         {result.score}
                       </span>
                       <span
@@ -335,10 +416,10 @@ export default function TeacherDashboardPage() {
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-[#800020]/10 dark:border-white/10 text-center">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
             <Link
               href="/teacher/results"
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#D4AF37]/40 hover:bg-[#FDF2F4] dark:hover:bg-[#2C1215] text-[#800020] dark:text-[#F3E5AB] text-xs font-bold transition"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
             >
               <span>فتح لوحة نتائج وتصحيحات الطلاب</span>
               <ChevronLeft className="w-4 h-4" />
